@@ -4,7 +4,17 @@
   "version": "1.0.0",
   "description": "Premium developer assistant for Sekaya Crowdfunding System (CFS)",
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/sekaya-logo.svg",
+      "48": "assets/sekaya-logo.svg",
+      "128": "assets/sekaya-logo.svg"
+    }
+  },
+  "icons": {
+    "16": "assets/sekaya-logo.svg",
+    "48": "assets/sekaya-logo.svg",
+    "128": "assets/sekaya-logo.svg"
   },
   "background": {
     "service_worker": "background.js"
