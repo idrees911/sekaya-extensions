@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sekaya Assistance</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Premium Glass Header -->
+    <header class="app-header">
+      <div class="brand">
+        <!-- <div class="brand-logo">S</div> -->
+        <div class="brand-text">
+          <h1>Sekaya <span class="accent">Assistant</span></h1>
+     
+        </div>
+      </div>
+      <div class="env-badge">Dev Mode</div>
+    </header>
+
+    <!-- App Navigation -->
+    <nav class="main-nav">
+      <button class="nav-btn active" data-tab="home-tab">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-tab="filler-tab">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-label">Filler</span>
+      </button>
+      <button class="nav-btn" data-tab="docs-tab">
+        <span class="nav-icon">📂</span>
+        <span class="nav-label">Docs</span>
+      </button>
+      <button class="nav-btn" data-tab="rules-tab">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Rules</span>
+      </button>
+    </nav>
+
+    <div class="content-area">
+      <!-- DASHBOARD TAB -->
+      <div class="tab-content active" id="home-tab">
+        <div class="hero-section">
+          <h2>Welcome!</h2>
+          <p>Ready to go.</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <div id="fastFillBtn" class="dash-card primary">
+            <div class="dash-icon">⚡</div>
+            <div class="dash-body">
+              <h3>Fast Fill</h3>
+              <p>Execute donor or charity registration flows instantly.</p>
+            </div>
+          </div>
+
+          <div class="dash-card secondary" onclick="document.querySelector('[data-tab=docs-tab]').click()">
+            <div class="dash-icon">📦</div>
+            <div class="dash-body">
+              <h3>Assets</h3>
+              <p>Manage local files for auto-uploading to components.</p>
+            </div>
+          </div>
+
+          <div id="highlightBtnDash" class="dash-card danger">
+            <div class="dash-icon">🛡️</div>
+            <div class="dash-body">
+              <h3>Validator Debugger</h3>
+              <p>Instantly highlight invalid fields with red pulses.</p>
+            </div>
+          </div>
+
+          <div class="dash-card disabled">
+            <div class="dash-icon">🌍</div>
+            <div class="dash-body">
+              <h3>Locale Stress-Tester</h3>
+              <p>Coming soon: RTL & long-text testing.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-footer">
+          <div class="footer-stat">
+            <span>Project Target</span>
+            <strong>SEKAYA CFS</strong>
+          </div>
+          <div class="footer-stat">
+            <span>Tech Stack</span>
+            <strong>NG 20 + PrimeNG</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- SMART FORM FILLER TAB -->
+      <div class="tab-content" id="filler-tab">
+        <div class="section-intro">
+          <span class="badge">Module</span>
+          <h3>Form Filler Engine</h3>
+          <p>Automated data population for Sekaya CFS components.</p>
+        </div>
+
+        <div class="action-grid">
+          <div id="fillDonorBtn" class="action-card-btn donor">
+            <div class="action-icon">👤</div>
+            <div class="action-content">
+              <strong>Individual Donor</strong>
+              <span>Name, National ID, Phone, Email</span>
+            </div>
+            <div class="action-trigger">Fill</div>
+          </div>
+
+          <div id="fillCharityBtn" class="action-card-btn charity">
+            <div class="action-icon">🏢</div>
+            <div class="action-content">
+              <strong>Charity Organization</strong>
+              <span>Reg Number, Bank Data, IBAN, Files</span>
+            </div>
+            <div class="action-trigger">Fill</div>
+          </div>
+        </div>
+
+        <div class="tool-belt">
+          <h4>Advanced Tools</h4>
+          <div class="utility-column">
+            <button id="highlightBtn" class="btn btn-soft-danger" style="margin-bottom: 10px;">
+              <span class="icon">🛡️</span> 
+              Highlight Invalid Fields
+            </button>
+            <button id="detectBtn" class="btn btn-soft">
+              <span class="icon">🔎</span> 
+              Scan Page for Reactive Fields
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENT LIBRARY TAB -->
+      <div class="tab-content" id="docs-tab">
+        <div class="section-intro">
+          <span class="badge">Assets</span>
+          <h3>Local Document Library</h3>
+          <p>Map local files to "cfs-file-upload" inputs via role names.</p>
+        </div>
+
+        <div class="upload-island">
+          <div class="form-group-minimal">
+            <input type="text" id="docName" placeholder="Role: e.g. registrationCertificate">
+            <input type="file" id="docFileInput" hidden>
+            <button id="addDocBtn" class="btn btn-accent-glow">
+              <span class="icon">📁</span> Select & Add to Library
+            </button>
+          </div>
+        </div>
+
+        <div class="file-table-container">
+          <div class="table-header">
+            <span>Stored Assets</span>
+            <span id="fileCountBadge" class="count-badge">0</span>
+          </div>
+          <div id="storedFilesList" class="rich-file-list">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERATION RULES TAB -->
+      <div class="tab-content" id="rules-tab">
+        <div class="section-intro">
+          <span class="badge">Config</span>
+          <h3>Engine Rules</h3>
+          <p>Customize patterns for specific validation requirements.</p>
+        </div>
+
+        <form id="rulesForm">
+          <div class="settings-stack">
+            <!-- Setting: Identity -->
+            <div class="setting-item">
+              <div class="setting-header">
+                <span class="setting-emoji">🆔</span>
+                <div class="setting-text">
+                  <label for="phonePattern">Phone Number Prefix</label>
+                  <p>Starting digits for Saudi mobile numbers.</p>
+                </div>
+              </div>
+              <input type="text" id="phonePattern" placeholder="9665">
+            </div>
+
+            <!-- Setting: Localization -->
+            <div class="setting-item">
+              <div class="setting-header">
+                <span class="setting-emoji">📍</span>
+                <div class="setting-text">
+                  <label for="zipCodeLength">National ZIP Length</label>
+                  <p>Standard Saudi postal code length.</p>
+                </div>
+              </div>
+              <input type="number" id="zipCodeLength" placeholder="5">
+            </div>
+
+            <!-- Setting: Business -->
+            <div class="setting-item">
+              <div class="setting-header">
+                <span class="setting-emoji">🏢</span>
+                <div class="setting-text">
+                  <label for="registrationNumberPattern">Charity Reg. Pattern</label>
+                  <p>Starting digits for registration numbers.</p>
+                </div>
+              </div>
+              <input type="text" id="registrationNumberPattern" placeholder="700">
+            </div>
+
+            <!-- Setting: Banking -->
+            <div class="setting-item">
+              <div class="setting-header">
+                <span class="setting-emoji">🏦</span>
+                <div class="setting-text">
+                  <label for="ibanPrefix">IBAN Country Code</label>
+                  <p>E.g. SA for Saudi Arabia.</p>
+                </div>
+              </div>
+              <input type="text" id="ibanPrefix" placeholder="SA" maxlength="4">
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-header">
+                <span class="setting-emoji">💳</span>
+                <div class="setting-text">
+                  <label for="accountNumberLength">Bank Account Length</label>
+                  <p>Total digits for account numbers.</p>
+                </div>
+              </div>
+              <input type="number" id="accountNumberLength" placeholder="15">
+            </div>
+          </div>
+
+          <div class="sticky-actions">
+            <button type="submit" class="btn btn-primary">Apply Configuration</button>
+            <button type="button" id="resetRulesBtn" class="btn btn-soft-danger">Reset to Defaults</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- GLOBAL STATUS BAR -->
+      <div id="statusMessage" class="status-toast"></div>
+    </div>
+  </div>
+
+  <script src="sekaya-data-generator.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extension Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 32px;
+    }
+    
+    .instructions {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .instructions h2 {
+      color: #764ba2;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+    
+    .alert-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-box strong {
+      color: #856404;
+    }
+    
+    .success-box {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .success-box.show {
+      display: block;
+    }
+    
+    .success-box strong {
+      color: #155724;
+    }
+    
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+    }
+    
+    .emoji {
+      font-size: 24px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="emoji">🧪</span>Extension Test Page</h1>
+    
+    <div class="alert-box">
+      <strong>⚠️ IMPORTANT:</strong> Open the browser console (<code>F12</code>) to see extension messages!
+    </div>
+    
+    <div class="success-box" id="successBox">
+      <strong>✅ SUCCESS!</strong> If you can see this message, the extension's content script is working!
+    </div>
+    
+    <div class="instructions">
+      <h2>📋 How to Test Your Extension</h2>
+      <ol>
+        <li>Press <code>F12</code> to open Chrome DevTools</li>
+        <li>Click the <strong>Console</strong> tab</li>
+        <li>Look for colorful messages from the extension:
+          <ul>
+            <li>🔌 <strong>EXTENSION LOADED!</strong> (purple background)</li>
+            <li>📍 Extension: Simple Learning Extension</li>
+            <li>🌐 Current URL: ...</li>
+            <li>✅ <strong>CONTENT SCRIPT READY!</strong> (green background)</li>
+          </ul>
+        </li>
+        <li>Check the bottom-right corner for a <strong>"✓ Extension Active"</strong> badge</li>
+        <li>Click the extension icon in your toolbar to open the popup</li>
+        <li>Click the <strong>"Show Alert"</strong> button in the popup</li>
+      </ol>
+    </div>
+    
+    <div class="instructions">
+      <h2>🔍 What Should You See?</h2>
+      <ol>
+        <li><strong>In the Console:</strong> Multiple styled log messages from content.js</li>
+        <li><strong>On the Page:</strong> A temporary purple badge in the bottom-right corner</li>
+        <li><strong>In the Popup:</strong> A purple gradient interface with a button</li>
+        <li><strong>When Clicking Button:</strong> An alert message appears</li>
+      </ol>
+    </div>
+    
+    <div class="instructions">
+      <h2>❌ Not Seeing Messages?</h2>
+      <ol>
+        <li>Make sure the extension is loaded in <code>chrome://extensions/</code></li>
+        <li>Ensure "Developer mode" is enabled</li>
+        <li>Refresh this page (<code>Ctrl+R</code> or <code>F5</code>)</li>
+        <li>Check that you're looking at the <strong>Console</strong> tab (not Elements or Network)</li>
+        <li>Read <code>TROUBLESHOOTING.md</code> for more help</li>
+      </ol>
+    </div>
+  </div>
+  
+  <script>
+    // This script will be modified by the extension's content script
+    console.log('%c📄 Test Page Loaded', 'color: #667eea; font-weight: bold; font-size: 14px;');
+    console.log('If you see extension messages above this, your extension is working! ✅');
+    
+    // Show success box after a delay (to allow extension to load)
+    setTimeout(() => {
+      const successBox = document.getElementById('successBox');
+      if (successBox) {
+        successBox.classList.add('show');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

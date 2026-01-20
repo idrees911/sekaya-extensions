@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Form Filler</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Smart Form Filler</h1>
+      <p class="subtitle">Fill forms instantly with your saved data</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="fill">Fill Form</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+      <button class="tab-btn" data-tab="rules">Rules</button>
+    </div>
+
+    <!-- Fill Form Tab -->
+    <div class="tab-content active" id="fill-tab">
+      <div class="action-buttons">
+        <button id="fillFormBtn" class="btn btn-primary">
+          <span class="icon">✨</span>
+          Fill Current Form
+        </button>
+        <button id="fillRandomBtn" class="btn btn-random">
+          <span class="icon">🎲</span>
+          Fill with Random Data
+        </button>
+        <button id="detectFieldsBtn" class="btn btn-secondary">
+          <span class="icon">🔍</span>
+          Detect Fields
+        </button>
+      </div>
+
+      <div class="info-box">
+        <p><strong>💡 How to use:</strong></p>
+        <ol>
+          <li>Configure your data in the Settings tab</li>
+          <li>Navigate to any form on a webpage</li>
+          <li>Click "Fill Current Form" to auto-fill with your data</li>
+          <li>Or click "Fill with Random Data" for testing purposes</li>
+        </ol>
+      </div>
+
+      <div class="form-section" style="padding: 16px; background: #f9f9f9; border-radius: 8px; margin-top: 16px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="useApiData" style="width: auto; cursor: pointer;">
+          <span style="font-weight: 600; color: #333;">🌐 Use API for realistic data (randomuser.me)</span>
+        </label>
+        <small class="help-text" style="margin-left: 24px;">When enabled, fetches real-looking data from external API. Disable for faster offline generation.</small>
+      </div>
+
+      <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab-content" id="settings-tab">
+      <form id="settingsForm">
+        <div class="form-section">
+          <h3>👤 Personal Information</h3>
+          
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" placeholder="John">
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" placeholder="Doe">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="john.doe@example.com">
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" placeholder="+1234567890">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>📍 Address Information</h3>
+          
+          <div class="form-group">
+            <label for="address">Street Address</label>
+            <input type="text" id="address" placeholder="123 Main St">
+          </div>
+
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" placeholder="New York">
+          </div>
+
+          <div class="form-group">
+            <label for="state">State/Province</label>
+            <input type="text" id="state" placeholder="NY">
+          </div>
+
+          <div class="form-group">
+            <label for="zipCode">ZIP/Postal Code</label>
+            <input type="text" id="zipCode" placeholder="10001">
+          </div>
+
+          <div class="form-group">
+            <label for="country">Country</label>
+            <input type="text" id="country" placeholder="United States">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>💼 Additional Information</h3>
+          
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input type="text" id="company" placeholder="Acme Corp">
+          </div>
+
+          <div class="form-group">
+            <label for="website">Website</label>
+            <input type="url" id="website" placeholder="https://example.com">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="icon">💾</span>
+            Save Settings
+          </button>
+          <button type="button" id="clearBtn" class="btn btn-danger">
+            <span class="icon">🗑️</span>
+            Clear All
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Rules Tab -->
+    <div class="tab-content" id="rules-tab">
+      <div class="info-box">
+        <p><strong>⚙️ Custom Rules:</strong></p>
+        <p>Configure custom patterns for random data generation. These rules only affect the "Fill with Random Data" feature.</p>
+      </div>
+
+      <form id="rulesForm">
+        <div class="form-section">
+          <h3>📱 Phone Number Rules</h3>
+          
+          <div class="form-group">
+            <label for="phonePattern">Phone Pattern (Prefix)</label>
+            <input type="text" id="phonePattern" placeholder="e.g., 9665 for Saudi Arabia">
+            <small class="help-text">Leave empty for default US format. Example: "9665" will generate numbers like +966 5XX XXX XXX</small>
+          </div>
+
+          <div class="form-group">
+            <label for="phonePrefix">Phone Prefix (if no pattern)</label>
+            <input type="text" id="phonePrefix" placeholder="+1">
+            <small class="help-text">Default country code (e.g., +1 for US, +44 for UK)</small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>📧 Email Rules</h3>
+          
+          <div class="form-group">
+            <label for="emailDomain">Force Email Domain</label>
+            <input type="text" id="emailDomain" placeholder="e.g., company.com">
+            <small class="help-text">All generated emails will use this domain. Leave empty for random domains.</small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>🌍 Location Rules</h3>
+          
+          <div class="form-group">
+            <label for="countryCode">Force Country</label>
+            <input type="text" id="countryCode" placeholder="e.g., Saudi Arabia">
+            <small class="help-text">Always use this country. Leave empty for random countries.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="zipCodeLength">ZIP/Postal Code Length</label>
+            <input type="number" id="zipCodeLength" placeholder="5" min="3" max="10">
+            <small class="help-text">Number of digits in postal code (default: 5)</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="icon">💾</span>
+            Save Rules
+          </button>
+          <button type="button" id="resetRulesBtn" class="btn btn-secondary">
+            <span class="icon">🔄</span>
+            Reset to Defaults
+          </button>
+        </div>
+      </form>
+
+      <div class="info-box" style="margin-top: 20px; background: #fff3cd; border-color: #ffc107;">
+        <p><strong>💡 Examples:</strong></p>
+        <ul style="margin-left: 20px; margin-top: 8px;">
+          <li><strong>Saudi Arabia:</strong> Phone Pattern = "9665"</li>
+          <li><strong>UK:</strong> Phone Prefix = "+44"</li>
+          <li><strong>Corporate:</strong> Email Domain = "company.com"</li>
+          <li><strong>Canada:</strong> ZIP Length = "6" (for postal codes)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="random-data.js"></script>
+  <script src="api-data-generator.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

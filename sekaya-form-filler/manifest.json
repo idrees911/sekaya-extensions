@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Sekaya Assistance",
+  "version": "1.0.0",
+  "description": "Premium developer assistant for Sekaya Crowdfunding System (CFS)",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
