@@ -277,7 +277,12 @@ const SekayaDataGenerator = {
       
       // Password (for registration)
       password: 'Sekaya@123',
-      confirmPassword: 'Sekaya@123'
+      confirmPassword: 'Sekaya@123',
+      
+      // Agreements
+      terms: true,
+      privacy: true,
+      subscribe: true
     };
   },
 
@@ -345,7 +350,9 @@ const SekayaDataGenerator = {
       commissioner: this.generateCommissionerData(),
       director: this.generateDirectorData(),
       association: this.generateAssociationData(),
-      bank: this.generateBankData()
+      bank: this.generateBankData(),
+      terms: true,
+      privacy: true
     };
   }
 };

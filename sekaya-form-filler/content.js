@@ -84,7 +84,7 @@ function highlightInvalidFields() {
     const inner = el.querySelector('.p-inputtext, .p-dropdown, .p-select, .cfs-file-input');
     if (inner) inner.classList.add('sekaya-pulse-error');
 
-    console.log('🚩 Invalid element detected:', el);
+    // console.log('🚩 Invalid element detected:', el);
   });
 
   return invalidElements.length;
@@ -179,12 +179,9 @@ function handleFileUploads(documents) {
           actualInput.dispatchEvent(new Event('change', { bubbles: true }));
           actualInput.dispatchEvent(new Event('input', { bubbles: true }));
           
-          console.log(`✅ Filled file: ${match.role} into ${name || label}`);
           docFilled++;
         }
-      } catch (err) {
-        console.warn(`File fill failed for ${name}:`, err);
-      }
+      } catch (err) {}
     }
   });
 

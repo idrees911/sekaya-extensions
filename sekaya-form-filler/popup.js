@@ -198,15 +198,14 @@ async function autoFillCurrentForm() {
 
     const url = tab.url.toLowerCase();
     
-    if (url.includes('/charity-registration')) {
+    if (url.includes('/charity-registration') || url.includes('/charity/register') || url.includes('charity-onboarding')) {
       showStatus('🔍 Route Detected: Charity Registration', 'info');
       await fillWithData('charity');
-    } else if (url.includes('/donor-registration')) {
+    } else if (url.includes('/donor-registration') || url.includes('/donor/register')) {
       showStatus('🔍 Route Detected: Donor Registration', 'info');
       await fillWithData('donor');
     } else {
-      // Fallback: If no specific route, default to donor but inform user
-      showStatus('⚡ Auto-detecting context... Filling as Donor', 'info');
+      showStatus('⚡ Route unknown. Filling as Donor...', 'info');
       await fillWithData('donor');
     }
   } catch (error) {
@@ -230,10 +229,10 @@ async function fillWithData(type) {
 
       // 2. Power Fill (Angular/PrimeNG Framework Sync)
       chrome.scripting.executeScript({
-        target: { tabId: tab.id },
+        target: { tabId: tab.id, allFrames: true },
         world: 'MAIN',
         func: (formValues, storedDocs) => {
-          console.log('🚀 Assistant Power Fill Started');
+          // Sekaya Assistant: Integrated Power Fill
 
           function base64ToFile(base64, fileName, mimeType) {
             const parts = base64.split(';base64,');
@@ -249,16 +248,54 @@ async function fillWithData(type) {
               const ctx = el.__ngContext__;
               if (!ctx) return;
               
-              const instance = ctx.find(i => i && typeof i === 'object' && 
-                ('writeValue' in i || 'updateInputfield' in i || 'options' in i || 'selectedOption' in i));
+              let instance = null;
+
+              // Robust Discovery: Manually iterate over context in case .find is missing (Common in prod LViews)
+              const searchContext = Array.isArray(ctx) ? ctx : (typeof ctx === 'object' ? Object.values(ctx) : []);
+              
+              for (const item of searchContext) {
+                if (item && typeof item === 'object') {
+                  // Look for Angular's ControlValueAccessor markers or PrimeNG specific methods
+                  if ('writeValue' in item || 'registerOnChange' in item || 'updateInputfield' in item || 'selectedOption' in item) {
+                    instance = item;
+                    break;
+                  }
+                }
+              }
               
               if (!instance) {
-                 const inner = el.querySelector('p-select, p-dropdown, p-multiselect, p-datepicker, p-fileupload, input');
+                 // Fallback: Drill down if the component is wrapped
+                 const inner = el.querySelector('p-select, p-dropdown, p-multiselect, p-datepicker, p-fileupload, input, .p-component');
                  if (inner && inner !== el) return syncComponent(inner, val, isFile);
+                 
+                 // If it's a raw input and no instance found, just set the value (standard DOM)
+                 if ((el.tagName === 'INPUT' || el.tagName === 'CHECKBOX') && !isFile) {
+                   if (typeof val === 'boolean') {
+                     el.checked = val;
+                   } else {
+                     el.value = val;
+                   }
+                   el.dispatchEvent(new Event('input', { bubbles: true }));
+                   el.dispatchEvent(new Event('change', { bubbles: true }));
+                   el.dispatchEvent(new Event('blur', { bubbles: true }));
+                 }
                  return;
               }
 
               let finalVal = val;
+              
+              // Date Handling: Convert numeric timestamps back to Date objects for Angular DatePickers
+              const isDateComponent = el.tagName.includes('DATE') || instance.inline !== undefined || String(el.id + el.getAttribute('formcontrolname')).toLowerCase().includes('date');
+              if (isDateComponent && typeof val === 'number') {
+                finalVal = new Date(val);
+              }
+
+              // Boolean/Checkbox Handling for Angular Components
+              if (typeof val === 'boolean' && (instance.toggle || 'checked' in instance || el.tagName.includes('CHECKBOX'))) {
+                if (instance.writeValue) instance.writeValue(val);
+                if (instance.control?.setValue) instance.control.setValue(val, { emitEvent: true });
+                return;
+              }
 
               // Dropdown/Select Resolution
               const isSelect = el.tagName.includes('SELECT') || el.tagName.includes('DROPDOWN') || instance.options !== undefined;
@@ -270,15 +307,12 @@ async function fillWithData(type) {
                 const match = options.find(o => {
                   const v = optVal ? o[optVal] : (typeof o === 'object' ? (o.value !== undefined ? o.value : o) : o);
                   const l = typeof o === 'object' ? o[optLab] : String(o);
-                  return String(v).toLowerCase() === String(val).toLowerCase() || 
-                         (l && String(l).toLowerCase().includes(String(val).toLowerCase()));
+                  return String(v).toLowerCase() === String(finalVal).toLowerCase() || 
+                         (l && String(l).toLowerCase().includes(String(finalVal).toLowerCase()));
                 });
 
                 if (match) {
                   finalVal = optVal ? match[optVal] : (typeof match === 'object' ? (match.value !== undefined ? match.value : match) : match);
-                } else if (options.length > 0) {
-                  const first = options[0];
-                  finalVal = optVal ? first[optVal] : (typeof first === 'object' ? (first.value !== undefined ? first.value : first) : first);
                 }
               }
 
@@ -296,12 +330,15 @@ async function fillWithData(type) {
                 }
               }
 
-              // UI Updates
+              // UI Updates (Handle potential minification by checking for function existence)
               if (typeof instance.updateInputfield === 'function') instance.updateInputfield();
               if (typeof instance.updateEditableLabel === 'function') instance.updateEditableLabel();
               if (typeof instance.updateSelectedOption === 'function') instance.updateSelectedOption();
               
+              // Trigger explicit tick if possible (optional)
               el.dispatchEvent(new Event('change', { bubbles: true }));
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('blur', { bubbles: true }));
 
             } catch(e) {}
           }
@@ -319,11 +356,39 @@ async function fillWithData(type) {
           });
 
           // Process Components
-          document.querySelectorAll('p-select, p-dropdown, p-multiselect, cfs-select, [formcontrolname]').forEach(sel => {
-             const key = sel.getAttribute('formcontrolname') || sel.id;
-             if (!key && !sel.tagName.includes('SELECT')) return;
-             let val = key ? (formValues[key] || Object.entries(formValues).find(([k]) => key.toLowerCase().includes(k.split('_').pop().toLowerCase()))?.[1]) : null;
-             if (val !== undefined && val !== null) syncComponent(sel, val);
+          document.querySelectorAll('p-select, p-dropdown, p-multiselect, p-datepicker, cfs-select, input, [formcontrolname]').forEach(sel => {
+             const fcn = sel.getAttribute('formcontrolname');
+             const id = sel.id;
+             const name = sel.getAttribute('name');
+             
+             // Ignore auto-generated numeric IDs
+             const isGenericId = id && /-\d+$/.test(id);
+             const key = fcn || name || (isGenericId ? null : id);
+             
+             if (!key && !sel.tagName.includes('SELECT') && !sel.tagName.includes('P-')) return;
+             
+             let val = null;
+             if (key) {
+               val = formValues[key];
+               if (val === undefined || val === null) {
+                 const entry = Object.entries(formValues).find(([k]) => {
+                   const suffix = k.split('_').pop().toLowerCase();
+                   return key.toLowerCase() === suffix || key.toLowerCase().includes(suffix);
+                 });
+                 if (entry) val = entry[1];
+               }
+             }
+
+             // Special handling for Terms and Privacy 
+             if (val === null || val === undefined) {
+               const text = (sel.innerText || sel.placeholder || '').toLowerCase();
+               if (text.includes('terms') || text.includes('conditions')) val = formValues['terms'];
+               if (text.includes('privacy')) val = formValues['privacy'];
+             }
+
+             if (val !== undefined && val !== null) {
+               syncComponent(sel, val);
+             }
           });
           
           setTimeout(() => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 300);
@@ -361,7 +426,8 @@ function flattenObject(obj, prefix = '') {
     if (typeof obj[k] === 'object' && obj[k] !== null && !(obj[k] instanceof Date) && !Array.isArray(obj[k])) {
       Object.assign(acc, flattenObject(obj[k], newKey));
     } else {
-      acc[newKey] = obj[k];
+      // If it's a date, convert to timestamp for safe transfer across isolated worlds
+      acc[newKey] = (obj[k] instanceof Date) ? obj[k].getTime() : obj[k];
     }
     return acc;
   }, {});
