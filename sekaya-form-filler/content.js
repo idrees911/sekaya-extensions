@@ -2,6 +2,10 @@
 
 console.log('🇸🇦 Sekaya Form Filler content script loaded');
 
+// Storage for captured network logs & auth
+let networkLogs = [];
+let lastAuthInfo = null; // { token, source }
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'fillForm') {
@@ -12,9 +16,89 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'highlightInvalid') {
     const count = highlightInvalidFields();
     sendResponse({ success: true, count: count });
+  } else if (message.action === 'getNetworkLogs') {
+    sendResponse({ success: true, logs: networkLogs });
+  } else if (message.action === 'clearNetworkLogs') {
+    networkLogs = [];
+    sendResponse({ success: true });
+  } else if (message.action === 'getAuthToken') {
+    // If we don't have it from interceptor, try scanning 
+    if (!lastAuthInfo) {
+        const token = scanForToken();
+        if (token) lastAuthInfo = { token, source: 'storage' };
+    }
+    sendResponse({ 
+        success: true, 
+        token: lastAuthInfo?.token, 
+        source: lastAuthInfo?.source 
+    });
+  } else if (message.action === 'clearAuthToken') {
+    lastAuthInfo = null;
+    sendResponse({ success: true });
   }
   return true;
 });
+
+// Listen for messages from the network interceptor (running in MAIN world)
+window.addEventListener('message', (event) => {
+  // Debug log for ALL messages to see if anything is coming through
+  if (event.data && event.data.source && event.data.source.startsWith('sekaya')) {
+      console.log('📬 Sekaya Content Global Listener:', event.data.source, event.data.payload ? 'has payload' : 'no payload');
+  }
+
+  if (!event.data) return;
+
+  if (event.data.source === 'sekaya-network-interceptor') {
+    networkLogs.push(event.data.payload);
+    if (networkLogs.length > 100) networkLogs.shift();
+  } else if (event.data.source === 'sekaya-auth-detector') {
+    console.log('🛡️ Sekaya Content: Received Auth Token from', event.data.payload.type);
+    lastAuthInfo = {
+        token: event.data.payload.token,
+        source: event.data.payload.type
+    };
+  }
+});
+
+function scanForToken() {
+  const jwtRegex = /[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+/g;
+  
+  const scanStorage = (storage) => {
+    for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        const val = storage.getItem(key);
+        if (val) {
+            const matches = val.match(jwtRegex);
+            if (matches) {
+                const bestMatch = matches.find(m => m.length > 50);
+                if (bestMatch) return bestMatch;
+            }
+        }
+    }
+    return null;
+  };
+
+  const token = scanStorage(localStorage) || scanStorage(sessionStorage) || scanCookies();
+  if (token) {
+    console.log('🛡️ Sekaya Assistant: Auto-detected token');
+  }
+  return token;
+
+  function scanCookies() {
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+        const [name, value] = cookie.split('=');
+        if (value) {
+            const matches = value.match(jwtRegex);
+            if (matches) {
+                const bestMatch = matches.find(m => m.length > 50);
+                if (bestMatch) return bestMatch;
+            }
+        }
+    }
+    return null;
+  }
+}
 
 /**
  * Injects pulse animation CSS if not present and highlights invalid fields

@@ -49,6 +49,14 @@
         <span class="nav-icon">⚙️</span>
         <span class="nav-label">Rules</span>
       </button>
+      <button class="nav-btn" data-tab="network-tab">
+        <span class="nav-icon">🌐</span>
+        <span class="nav-label">API</span>
+      </button>
+      <button class="nav-btn" data-tab="security-tab">
+        <span class="nav-icon">🔐</span>
+        <span class="nav-label">Auth</span>
+      </button>
     </nav>
 
     <div class="content-area">
@@ -84,11 +92,11 @@
             </div>
           </div>
 
-          <div class="dash-card disabled">
-            <div class="dash-icon">🌍</div>
+          <div class="dash-card info" onclick="document.querySelector('[data-tab=network-tab]').click()">
+            <div class="dash-icon">🌐</div>
             <div class="dash-body">
-              <h3>Locale Stress-Tester</h3>
-              <p>Coming soon: RTL & long-text testing.</p>
+              <h3>API Monitor</h3>
+              <p>Debug network requests and inspect component payloads.</p>
             </div>
           </div>
         </div>
@@ -252,6 +260,94 @@
             <button type="button" id="resetRulesBtn" class="btn btn-soft-danger">Reset to Defaults</button>
           </div>
         </form>
+      </div>
+
+      <!-- NETWORK MONITOR TAB -->
+      <div class="tab-content" id="network-tab">
+        <div class="section-intro">
+          <span class="badge">Monitoring</span>
+          <h3>API Activity</h3>
+          <p>Live capture of CFS API calls, requests, and payloads.</p>
+        </div>
+        
+        <div class="network-controls">
+          <button id="clearLogsBtn" class="btn btn-soft-danger" style="width: auto; padding: 8px 16px;">
+            <span class="icon">🗑️</span> Clear Logs
+          </button>
+          <div class="monitor-status">
+            <span class="pulse-dot"></span> Monitoring Active
+          </div>
+        </div>
+
+        <div class="log-container">
+          <div id="networkLogsList" class="network-log-list">
+            <div class="empty-state">No API calls detected yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECURITY / JWT DECODER TAB -->
+      <div class="tab-content" id="security-tab">
+        <div class="section-intro">
+          <span class="badge">Security</span>
+          <h3>JWT Token Decoder</h3>
+          <p>Real-time auth analysis, claims inspection, and expiry countdown.</p>
+        </div>
+
+        <div class="jwt-container">
+          <div id="tokenStateBox" class="auth-status-bar">
+            <span class="auth-dot"></span>
+            <span id="tokenStatusText">No Token Detected</span>
+            <span id="tokenSourceBadge" class="badge-sm" style="display: none; margin-left: auto;">API Header</span>
+          </div>
+
+          <div class="token-input-group">
+            <textarea id="tokenInput" placeholder="Paste your JWT here or wait for auto-detection..." spellcheck="false"></textarea>
+            <div class="input-actions">
+              <button id="clearTokenBtn" class="btn-icon">🗑️</button>
+              <button id="refreshTokenBtn" class="btn btn-soft-primary" style="font-size: 11px; padding: 6px 12px;">Trigger Refresh</button>
+            </div>
+          </div>
+
+          <div id="tokenDetails" class="token-details" style="display: none;">
+            <!-- User Summary Section -->
+            <div id="userProfile" class="user-profile-card">
+              <div class="user-avatar" id="userAvatar">U</div>
+              <div class="user-info">
+                <h4 id="profileName">Admin User</h4>
+                <p id="profileEmail">admin@sekaya.sa</p>
+                <div id="profileRoles" class="role-tags"></div>
+              </div>
+            </div>
+
+            <div class="expiry-card">
+              <div class="expiry-header">
+                <span class="label">Session Expiry</span>
+                <span id="expiryTime" class="value">00:00:00</span>
+              </div>
+              <div class="progress-track">
+                <div id="expiryProgress" class="progress-bar"></div>
+              </div>
+            </div>
+
+            <!-- Management Scopes / Permissions -->
+            <div id="permissionSection" class="permissions-wrapper" style="display: none;">
+              <h4>Management Scopes</h4>
+              <div id="permissionGrid" class="perm-grid"></div>
+            </div>
+
+            <div class="claims-list-wrapper">
+              <h4>Raw Token Claims</h4>
+              <div id="claimsList" class="claims-list">
+                <!-- Dynamically Rendered -->
+              </div>
+            </div>
+            
+            <button id="copyClaimsBtn" class="btn btn-soft" style="margin-top: 12px;">
+              <span class="icon">📋</span> Copy Payload JSON
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- GLOBAL STATUS BAR -->

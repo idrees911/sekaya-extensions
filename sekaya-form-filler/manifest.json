@@ -23,7 +23,14 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_idle",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["network-interceptor.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
       "all_frames": true
     }
   ],

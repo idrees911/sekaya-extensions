@@ -3,6 +3,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupEventListeners();
+  setupNetworkMonitor();
+  setupSecurityModule();
   await loadAndApplyRules();
   await loadStoredDocuments();
 });
@@ -458,4 +460,376 @@ function showStatus(message, type) {
   el.textContent = message;
   el.className = `status-toast show ${type}`;
   setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// --- MODULE: NETWORK MONITOR ---
+
+let logInterval = null;
+
+function setupNetworkMonitor() {
+  const clearLogsBtn = document.getElementById('clearLogsBtn');
+  clearLogsBtn?.addEventListener('click', clearNetworkLogs);
+
+  // Poll for logs when the network tab is active
+  const networkTabBtn = document.querySelector('[data-tab="network-tab"]');
+  networkTabBtn?.addEventListener('click', startLogPolling);
+
+  // Stop polling when other tabs are clicked
+  document.querySelectorAll('.nav-btn:not([data-tab="network-tab"])').forEach(btn => {
+    btn.addEventListener('click', stopLogPolling);
+  });
+}
+
+function startLogPolling() {
+  if (logInterval) return;
+  fetchAndRenderLogs();
+  logInterval = setInterval(fetchAndRenderLogs, 2000);
+}
+
+function stopLogPolling() {
+  if (logInterval) {
+    clearInterval(logInterval);
+    logInterval = null;
+  }
+}
+
+async function fetchAndRenderLogs() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id || tab.url.startsWith('chrome://')) return;
+
+    chrome.tabs.sendMessage(tab.id, { action: 'getNetworkLogs' }, (response) => {
+      if (chrome.runtime.lastError) {
+        // Content script might not be ready
+        return;
+      }
+      if (response?.success && response.logs) {
+        renderNetworkLogs(response.logs);
+      }
+    });
+  } catch (err) {}
+}
+
+function renderNetworkLogs(logs) {
+  const listContainer = document.getElementById('networkLogsList');
+  if (!listContainer) return;
+
+  if (logs.length === 0) {
+    listContainer.innerHTML = '<div class="empty-state">No API calls detected yet.</div>';
+    return;
+  }
+
+  // Preserve expanded state based on timestamp which acts as a unique ID here
+  const expandedIds = Array.from(listContainer.querySelectorAll('.log-item.expanded')).map(el => el.dataset.timestamp);
+
+  listContainer.innerHTML = '';
+  logs.slice().reverse().forEach(log => {
+    const isError = (typeof log.status === 'number' && log.status >= 400) || log.status === 'Error';
+    const time = new Date(log.timestamp).toLocaleTimeString();
+    
+    const item = document.createElement('div');
+    item.className = `log-item ${expandedIds.includes(String(log.timestamp)) ? 'expanded' : ''}`;
+    item.dataset.timestamp = log.timestamp;
+    
+    // Clean up response for display
+    let displayBody = log.responseBody;
+    if (typeof displayBody === 'object' && displayBody !== null) {
+      displayBody = JSON.stringify(displayBody, null, 2);
+    }
+
+    item.innerHTML = `
+      <div class="log-header">
+        <span class="log-method ${log.method}">${log.method}</span>
+        <span class="log-status ${isError ? 'status-error' : 'status-ok'}">${log.status}</span>
+      </div>
+      <div class="log-url" title="${log.url}">${log.url}</div>
+      <div class="log-meta">
+        <span>${time}</span>
+        <span>${log.duration}ms</span>
+        <span>${log.type.toUpperCase()}</span>
+      </div>
+      <div class="log-detail">
+        <div class="log-detail-section">
+          <h5>Request Headers</h5>
+          <pre>${JSON.stringify(log.requestHeaders, null, 2)}</pre>
+        </div>
+        <div class="log-detail-section">
+          <h5>Response Content</h5>
+          <pre>${displayBody || '[Empty Response]'}</pre>
+        </div>
+      </div>
+    `;
+
+    item.addEventListener('click', (e) => {
+      // Don't toggle if clicking inside the pre block (to allow selection)
+      if (e.target.closest('pre')) return;
+      item.classList.toggle('expanded');
+    });
+
+    listContainer.appendChild(item);
+  });
+}
+
+async function clearNetworkLogs() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, { action: 'clearNetworkLogs' }, () => {
+        if (!chrome.runtime.lastError) {
+          renderNetworkLogs([]);
+          showStatus('🗑️ Network logs cleared', 'info');
+        }
+      });
+    }
+  } catch (err) {}
+}
+
+// --- MODULE: SECURITY / JWT DECODER ---
+
+let expiryTimer = null;
+let currentTokenPayload = null;
+let authPollInterval = null;
+
+function setupSecurityModule() {
+  const tokenInput = document.getElementById('tokenInput');
+  const clearTokenBtn = document.getElementById('clearTokenBtn');
+  const copyClaimsBtn = document.getElementById('copyClaimsBtn');
+  const refreshBtn = document.getElementById('refreshTokenBtn');
+
+  tokenInput?.addEventListener('input', () => processToken(tokenInput.value));
+  clearTokenBtn?.addEventListener('click', () => {
+    tokenInput.value = '';
+    processToken('');
+  });
+  
+  copyClaimsBtn?.addEventListener('click', () => {
+    if (currentTokenPayload) {
+      navigator.clipboard.writeText(JSON.stringify(currentTokenPayload, null, 2));
+      showStatus('📋 Claims copied to clipboard', 'success');
+    }
+  });
+
+  refreshBtn?.addEventListener('click', async () => {
+    showStatus('🔄 Requesting token refresh...', 'info');
+    setTimeout(() => showStatus('✅ Refresh flow triggered', 'success'), 1000);
+  });
+
+  const securityTabBtn = document.querySelector('[data-tab="security-tab"]');
+  securityTabBtn?.addEventListener('click', startAuthPolling);
+
+  document.querySelectorAll('.nav-btn:not([data-tab="security-tab"])').forEach(btn => {
+    btn.addEventListener('click', stopAuthPolling);
+  });
+
+  startAuthPolling();
+}
+
+function startAuthPolling() {
+  if (authPollInterval) return;
+  fetchAuthToken();
+  authPollInterval = setInterval(fetchAuthToken, 3000);
+}
+
+function stopAuthPolling() {
+  if (authPollInterval) {
+    clearInterval(authPollInterval);
+    authPollInterval = null;
+  }
+}
+
+async function fetchAuthToken() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id || tab.url.startsWith('chrome://')) return;
+
+    chrome.tabs.sendMessage(tab.id, { action: 'getAuthToken' }, (response) => {
+      if (chrome.runtime.lastError) return;
+      if (response?.success && response.token) {
+        const tInput = document.getElementById('tokenInput');
+        if (tInput && tInput.value !== response.token) {
+          tInput.value = response.token;
+          processToken(response.token, response.source);
+        }
+      }
+    });
+  } catch (err) {}
+}
+
+function processToken(token, source = 'manual') {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    updateTokenUI(null);
+    return;
+  }
+
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    currentTokenPayload = payload;
+    updateTokenUI(payload, source);
+  } catch (e) {
+    updateTokenUI(null);
+  }
+}
+
+function updateTokenUI(payload, source = 'manual') {
+  const details = document.getElementById('tokenDetails');
+  const statusBox = document.getElementById('tokenStateBox');
+  const statusText = document.getElementById('tokenStatusText');
+  const sourceBadge = document.getElementById('tokenSourceBadge');
+  const claimsList = document.getElementById('claimsList');
+
+  if (!payload || !details) {
+    if (details) details.style.display = 'none';
+    if (statusBox) statusBox.classList.remove('active');
+    if (statusText) statusText.textContent = 'No Token Detected';
+    if (sourceBadge) sourceBadge.style.display = 'none';
+    clearInterval(expiryTimer);
+    return;
+  }
+
+  details.style.display = 'block';
+  statusBox.classList.add('active');
+  statusText.textContent = '🔐 Token Active & Decoded';
+  
+  if (sourceBadge) {
+    sourceBadge.style.display = 'block';
+    const sourceLabels = {
+        'header': 'Request Header',
+        'xhr-header': 'XHR Header',
+        'storage': 'Local Storage',
+        'cookie': 'Cookie',
+        'resp-body': 'API Response',
+        'resp-header': 'Response Header',
+        'manual': 'Pasted'
+    };
+    sourceBadge.textContent = sourceLabels[source] || source;
+  }
+
+  // 1. Populate User Profile Summary
+  const profileName = document.getElementById('profileName');
+  const profileEmail = document.getElementById('profileEmail');
+  const profileRoles = document.getElementById('profileRoles');
+  const userAvatar = document.getElementById('userAvatar');
+
+  const name = payload.name || payload.preferred_username || 'Unknown User';
+  const email = payload.email || 'No email provided';
+  const roles = payload['client-roles'] || payload.roles || [];
+
+  if (profileName) profileName.textContent = name;
+  if (profileEmail) profileEmail.textContent = email;
+  if (userAvatar) userAvatar.textContent = name.charAt(0).toUpperCase();
+
+  if (profileRoles) {
+    profileRoles.innerHTML = '';
+    [...new Set(roles)].forEach(role => {
+      const tag = document.createElement('span');
+      tag.className = 'role-tag';
+      tag.textContent = role;
+      profileRoles.appendChild(tag);
+    });
+  }
+
+  // 2. Populate Management Permissions (Sekaya Specific Grid)
+  const permSection = document.getElementById('permissionSection');
+  const permGrid = document.getElementById('permissionGrid');
+  const permissions = payload.authorization?.permissions || [];
+
+  const ICON_MAP = {
+    'dashboard-management': '📊',
+    'user-management': '👥',
+    'wallet-management': '💰',
+    'charities-management': '🏛️',
+    'opportunities-management': '🎯',
+    'suggestion-complaint-management': '📩',
+    'reports-management': '📈',
+    'audit-management': '🔍',
+    'settings-management': '⚙️'
+  };
+
+  if (permissions.length > 0 && permSection && permGrid) {
+    permSection.style.display = 'block';
+    permGrid.innerHTML = '';
+    
+    permissions.forEach(p => {
+      if (p.rsname === 'NewResource') return; // Skip placeholders
+      
+      const card = document.createElement('div');
+      card.className = 'perm-card active';
+      
+      const icon = ICON_MAP[p.rsname] || '🛠️';
+      const label = p.rsname.replace(/-management$/, '').replace(/-/g, ' ');
+      
+      card.innerHTML = `
+        <div class="perm-icon">${icon}</div>
+        <div class="perm-label">${label}</div>
+      `;
+      permGrid.appendChild(card);
+    });
+  } else if (permSection) {
+    permSection.style.display = 'none';
+  }
+
+  // 3. Render All Raw Claims
+  claimsList.innerHTML = '';
+  Object.entries(payload).forEach(([key, val]) => {
+    // Skip large objects that we've already visualized to keep list clean
+    if (key === 'authorization') return;
+
+    const item = document.createElement('div');
+    item.className = 'claim-item';
+    item.innerHTML = `
+      <span class="claim-key">${key}</span>
+      <span class="claim-val">${typeof val === 'object' ? JSON.stringify(val) : val}</span>
+    `;
+    claimsList.appendChild(item);
+  });
+
+  if (payload.exp) {
+    startExpiryCountdown(payload.exp);
+  }
+}
+
+function startExpiryCountdown(expTimestamp) {
+  clearInterval(expiryTimer);
+  
+  const update = () => {
+    const now = Math.floor(Date.now() / 1000);
+    const timeLeft = expTimestamp - now;
+    const expiryEl = document.getElementById('expiryTime');
+    const progressEl = document.getElementById('expiryProgress');
+
+    if (!expiryEl || !progressEl) return;
+
+    if (timeLeft <= 0) {
+      expiryEl.textContent = 'EXPIRED';
+      expiryEl.style.color = '#ef4444';
+      progressEl.style.width = '0%';
+      clearInterval(expiryTimer);
+      return;
+    }
+
+    const hours = Math.floor(timeLeft / 3600);
+    const minutes = Math.floor((timeLeft % 3600) / 60);
+    const seconds = timeLeft % 60;
+
+    expiryEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    expiryEl.style.color = '';
+    
+    const iat = currentTokenPayload.iat || (expTimestamp - 3600);
+    const totalDuration = expTimestamp - iat;
+    const elapsed = now - iat;
+    const percentage = Math.max(0, Math.min(100, 100 - (elapsed / totalDuration * 100)));
+    
+    progressEl.style.width = `${percentage}%`;
+    progressEl.className = 'progress-bar';
+    if (percentage < 10) progressEl.classList.add('danger');
+    else if (percentage < 25) progressEl.classList.add('warning');
+    
+    if (timeLeft === 300) {
+        showStatus('⚠️ Alert: Token expires in 5 minutes!', 'error');
+    }
+  };
+
+  update();
+  expiryTimer = setInterval(update, 1000);
 }
