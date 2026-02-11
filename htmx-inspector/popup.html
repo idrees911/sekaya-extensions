@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTMX Inspector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    
+    <header>
+      <h1>Web Inspector</h1>
+      <div class="badge">Pro</div>
+    </header>
+    
+    <main>
+      <div class="control-group main-toggle">
+        <label for="inspector-toggle" class="toggle-label">
+          <span>Inspection Mode</span>
+          <span class="status-indicator" id="status-text">Off</span>
+        </label>
+        <label class="toggle-switch" for="inspector-toggle">
+          <input type="checkbox" id="inspector-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="features-grid" id="features-panel">
+        <label class="feature-checkbox">
+          <input type="checkbox" id="opt-styles" checked>
+          <span class="checkbox-box"></span>
+          <span class="feature-label">Styles</span>
+        </label>
+        <label class="feature-checkbox">
+          <input type="checkbox" id="opt-boxmodel" checked>
+          <span class="checkbox-box"></span>
+          <span class="feature-label">Box Model</span>
+        </label>
+        <label class="feature-checkbox">
+          <input type="checkbox" id="opt-layout" checked>
+          <span class="checkbox-box"></span>
+          <span class="feature-label">Layout</span>
+        </label>
+      </div>
+
+      <p class="description">
+        Toggle to inspect element styles, box model, and layout details.
+      </p>
+    </main>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

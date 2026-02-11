@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Web Inspector Pro",
+  "version": "1.0",
+  "description": "Professional web inspection tool for Styles, Box Model, and Layout.",
+  "permissions": ["activeTab", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Inspect Web"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}
