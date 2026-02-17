@@ -33,6 +33,7 @@ function enable() {
   if (isEnabled) return;
   isEnabled = true;
   tooltip = createTooltip();
+  toggleStatusBadge(true);
   
   document.addEventListener('mouseover', onHover);
   document.addEventListener('mouseout', onOut);
@@ -47,11 +48,43 @@ function disable() {
   document.removeEventListener('click', onClick, { capture: true });
   document.removeEventListener('scroll', onScroll);
   
+  // Cleanup Highlights
+  document.querySelectorAll('.' + INSPECT_CLASS).forEach(el => el.classList.remove(INSPECT_CLASS));
+  
   clearOverlays();
   if (tooltip) {
       tooltip.remove();
       tooltip = null;
   }
+  toggleStatusBadge(false);
+  
+  // Reset State
+  hoveredElement = null;
+  lockedElement = null;
+}
+
+function toggleStatusBadge(active) {
+    let badge = document.querySelector('.htmx-inspector-status');
+    if (active) {
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'htmx-inspector-status';
+            badge.innerHTML = '<span class="htmx-status-dot"></span> Inspector Active <span style="margin-left:4px; opacity:0.6; font-size:10px; font-weight:normal">(Click to Stop)</span>';
+            badge.title = "Click to Deactivate";
+            
+            // Add click listener to deactivate
+            badge.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent locking logic
+                e.preventDefault();
+                disable();
+                chrome.storage.local.set({ isEnabled: false });
+            });
+            
+            document.body.appendChild(badge);
+        }
+    } else {
+        if (badge) badge.remove();
+    }
 }
 
 function createTooltip() {
@@ -78,9 +111,13 @@ function onHover(e) {
   if (lockedElement) return;
 
   const target = e.target;
-  // Ignore our own UI elements
-  if (target.closest('.htmx-inspector-tooltip') || target.closest('.htmx-layout-overlay')) return;
-
+    // Ignore our own UI elements (Tooltip, Layout Overlay, Status Badge)
+    if (!target || 
+        target.closest('.htmx-inspector-tooltip') || 
+        target.closest('.htmx-layout-overlay') || 
+        target.closest('.htmx-inspector-status')) {
+        return;
+    }
   if (hoveredElement === target) return;
   
   hoveredElement = target;
@@ -111,8 +148,11 @@ function renderInspection(target, mouseX, mouseY) {
 function onClick(e) {
     if (!isEnabled) return;
     
-    // Allow clicking inside our tooltip (e.g. to copy text)
-    if (e.target.closest('.htmx-inspector-tooltip')) return;
+    // Allow interacting with our own UI (Tooltip, Status Badge)
+    if (e.target.closest('.htmx-inspector-tooltip') || 
+        e.target.closest('.htmx-inspector-status')) {
+        return;
+    }
 
     e.preventDefault();
     e.stopPropagation();

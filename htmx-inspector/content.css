@@ -234,3 +234,49 @@
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* Inspector Status Badge */
+.htmx-inspector-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #0f172a;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: system-ui, sans-serif;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 2147483647;
+    pointer-events: auto; /* Changed from none to auto */
+    cursor: pointer;      /* Added cursor */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.9;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s ease;
+}
+
+.htmx-inspector-status:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.2);
+    background: #1e293b;
+}
+
+.htmx-status-dot {
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #22c55e;
+    animation: htmx-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes htmx-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
