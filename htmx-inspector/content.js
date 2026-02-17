@@ -126,6 +126,11 @@ function onHover(e) {
 
 // Logic to render overlays/tooltip (extracted for reuse)
 function renderInspection(target, mouseX, mouseY) {
+  // Clear any existing highlights first
+  document.querySelectorAll('.' + INSPECT_CLASS).forEach(el => {
+      if (el !== target) el.classList.remove(INSPECT_CLASS);
+  });
+
   clearOverlays();
 
   // 1. Box Model Overlay

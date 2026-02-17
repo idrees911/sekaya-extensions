@@ -6,7 +6,8 @@
   "permissions": ["activeTab", "storage"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Inspect Web"
+    "default_title": "Inspect Web",
+    "default_icon": "div.png"
   },
   "content_scripts": [
     {

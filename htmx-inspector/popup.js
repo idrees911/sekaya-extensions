@@ -9,9 +9,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     layout: document.getElementById('opt-layout')
   };
 
-  // Load initial state
-  const stored = await chrome.storage.local.get(['isEnabled', 'config']);
-  toggle.checked = !!stored.isEnabled;
+  // Load initial state but FORCE ENABLE on open
+  const stored = await chrome.storage.local.get(['config']);
+  
+  // Always start as Active when popup opens
+  toggle.checked = true;
+  updateUI(true);
+  
+  // Save this active state and notify content immediately
+  await chrome.storage.local.set({ isEnabled: true });
+  notifyContent();
   
   if (stored.config) {
     Object.keys(options).forEach(key => {
@@ -20,8 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-
-  updateUI(!!stored.isEnabled);
 
   // Event Listeners
   toggle.addEventListener('change', async () => {
