@@ -15,7 +15,10 @@ let svgLayer = null; // High-performance SVG layer for distances
 // Initialize
 chrome.storage.local.get(['isEnabled', 'config'], (data) => {
   if (data.config) config = { ...config, ...data.config };
-  if (data.isEnabled) enable();
+  if (data.isEnabled) {
+      document.documentElement.classList.add('htmx-inspector-active');
+      enable();
+  }
 });
 
 // Messages
@@ -33,6 +36,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 function enable() {
   if (isEnabled) return;
   isEnabled = true;
+  document.documentElement.classList.add('htmx-inspector-active');
   tooltip = createTooltip();
   svgLayer = createSvgLayer();
   toggleStatusBadge(true);
@@ -45,6 +49,7 @@ function enable() {
 
 function disable() {
   isEnabled = false;
+  document.documentElement.classList.remove('htmx-inspector-active');
   document.removeEventListener('mouseover', onHover);
   document.removeEventListener('mouseout', onOut);
   document.removeEventListener('click', onClick, { capture: true });
