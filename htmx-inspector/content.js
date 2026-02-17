@@ -220,37 +220,45 @@ function drawBoxModel(el) {
   const mb = getVal('marginBottom');
   const ml = getVal('marginLeft');
 
+  const bt = getVal('borderTopWidth');
+  const br = getVal('borderRightWidth');
+  const bb = getVal('borderBottomWidth');
+  const bl = getVal('borderLeftWidth');
+
   const pt = getVal('paddingTop');
   const pr = getVal('paddingRight');
   const pb = getVal('paddingBottom');
   const pl = getVal('paddingLeft');
 
-  // Margin Box (Orange)
-  const marginBox = document.createElement('div');
-  marginBox.className = 'htmx-box-overlay htmx-box-margin';
-  marginBox.style.top = `${rect.top + scrollY - mt}px`;
-  marginBox.style.left = `${rect.left + scrollX - ml}px`;
-  marginBox.style.width = `${rect.width + ml + mr}px`;
-  marginBox.style.height = `${rect.height + mt + mb}px`;
-  document.body.appendChild(marginBox);
+  const createBox = (className, top, left, width, height, label) => {
+    const box = document.createElement('div');
+    box.className = `htmx-box-overlay ${className}`;
+    box.style.top = `${top}px`;
+    box.style.left = `${left}px`;
+    box.style.width = `${width}px`;
+    box.style.height = `${height}px`;
+    
+    if (label && width > 40 && height > 20) {
+        const labelEl = document.createElement('span');
+        labelEl.className = 'htmx-box-label';
+        labelEl.textContent = label;
+        box.appendChild(labelEl);
+    }
+    
+    document.body.appendChild(box);
+  };
 
-  // Padding Box (Green) - roughly matches element rect
-  const paddingBox = document.createElement('div');
-  paddingBox.className = 'htmx-box-overlay htmx-box-padding';
-  paddingBox.style.top = `${rect.top + scrollY}px`;
-  paddingBox.style.left = `${rect.left + scrollX}px`;
-  paddingBox.style.width = `${rect.width}px`;
-  paddingBox.style.height = `${rect.height}px`;
-  document.body.appendChild(paddingBox);
+  // 1. Margin Box
+  createBox('htmx-box-margin', rect.top + scrollY - mt, rect.left + scrollX - ml, rect.width + ml + mr, rect.height + mt + mb, 'margin');
+
+  // 2. Border Box
+  createBox('htmx-box-border', rect.top + scrollY, rect.left + scrollX, rect.width, rect.height, 'border');
+
+  // 3. Padding Box
+  createBox('htmx-box-padding', rect.top + scrollY + bt, rect.left + scrollX + bl, rect.width - bl - br, rect.height - bt - bb, 'padding');
   
-  // Content Box (Blue)
-  const contentBox = document.createElement('div');
-  contentBox.className = 'htmx-box-overlay htmx-box-content';
-  contentBox.style.top = `${rect.top + scrollY + pt}px`;
-  contentBox.style.left = `${rect.left + scrollX + pl}px`;
-  contentBox.style.width = `${rect.width - pl - pr}px`;
-  contentBox.style.height = `${rect.height - pt - pb}px`;
-  document.body.appendChild(contentBox);
+  // 4. Content Box
+  createBox('htmx-box-content', rect.top + scrollY + bt + pt, rect.left + scrollX + bl + pl, rect.width - bl - br - pl - pr, rect.height - bt - bb - pt - pb, 'content');
 }
 
 function drawLayoutGuides(el) {
