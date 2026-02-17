@@ -532,32 +532,171 @@ function drawProDistances(target, reference) {
         // Comparison Mode: Between two elements
         drawGapBetween(tRect, rRect, scrollX, scrollY);
     } else {
-        // Standard Mode: nearest neighbors
+        // External distances removed per user request
+        /*
         const directions = ['top', 'bottom', 'left', 'right'];
         directions.forEach(dir => {
-            const gap = findNearestGap(tRect, dir);
+            const gap = findNearestGap(tRect, dir, target);
             if (gap) {
                 drawProLine(gap.x1 + scrollX, gap.y1 + scrollY, gap.x2 + scrollX, gap.y2 + scrollY, gap.value);
             }
         });
+        */
     }
 }
 
-function findNearestGap(rect, dir) {
-    // Simplistic raycasting: measure to parent or viewport
+function findNearestGap(rect, dir, targetEl) {
     const viewport = { width: globalThis.innerWidth, height: globalThis.innerHeight };
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
-    switch(dir) {
-        case 'top': 
-            return { x1: rect.left + rect.width/2, y1: 0, x2: rect.left + rect.width/2, y2: rect.top, value: Math.round(rect.top) };
-        case 'bottom':
-            return { x1: rect.left + rect.width/2, y1: rect.bottom, x2: rect.left + rect.width/2, y2: viewport.height, value: Math.round(viewport.height - rect.bottom) };
-        case 'left':
-            return { x1: 0, y1: rect.top + rect.height/2, x2: rect.left, y2: rect.top + rect.height/2, value: Math.round(rect.left) };
-        case 'right':
-            return { x1: rect.right, y1: rect.top + rect.height/2, x2: viewport.width, y2: rect.top + rect.height/2, value: Math.round(viewport.width - rect.right) };
+    let nearest = getNearestElementEdge(rect, dir);
+    
+    // Container sensing: If the target is inside a parent, the parent's inner edge is a boundary
+    let parent = targetEl?.parentElement;
+    while (parent && parent !== document.body) {
+        const pRect = parent.getBoundingClientRect();
+        const pStyle = globalThis.getComputedStyle(parent);
+        
+        // Stop at the first parent that has padding or is a significant container
+        const pt = Number.parseFloat(pStyle.paddingTop) || 0;
+        const pl = Number.parseFloat(pStyle.paddingLeft) || 0;
+        const pr = Number.parseFloat(pStyle.paddingRight) || 0;
+        const pb = Number.parseFloat(pStyle.paddingBottom) || 0;
+
+        const innerBoundary = {
+            top: pRect.top + pt,
+            left: pRect.left + pl,
+            right: pRect.right - pr,
+            bottom: pRect.bottom - pb
+        };
+
+        let hitBoundary = false;
+        if (dir === 'top' && rect.top > innerBoundary.top + 1) {
+            if (!nearest || innerBoundary.top > nearest.bottom - 1) {
+                nearest = { bottom: innerBoundary.top, top: innerBoundary.top, left: innerBoundary.left, right: innerBoundary.right };
+                hitBoundary = true;
+            }
+        } else if (dir === 'bottom' && rect.bottom < innerBoundary.bottom - 1) {
+            if (!nearest || innerBoundary.bottom < nearest.top + 1) {
+                nearest = { top: innerBoundary.bottom, bottom: innerBoundary.bottom, left: innerBoundary.left, right: innerBoundary.right };
+                hitBoundary = true;
+            }
+        } else if (dir === 'left' && rect.left > innerBoundary.left + 1) {
+            if (!nearest || innerBoundary.left > nearest.right - 1) {
+                nearest = { right: innerBoundary.left, left: innerBoundary.left, top: innerBoundary.top, bottom: innerBoundary.bottom };
+                hitBoundary = true;
+            }
+        } else if (dir === 'right' && rect.right < innerBoundary.right - 1) {
+            if (!nearest || innerBoundary.right < nearest.left + 1) {
+                nearest = { left: innerBoundary.right, right: innerBoundary.right, top: innerBoundary.top, bottom: innerBoundary.bottom };
+                hitBoundary = true;
+            }
+        }
+        
+        if (hitBoundary) break; // We found the immediate containing boundary
+        parent = parent.parentElement;
     }
-    return null;
+
+    const { x1, y1, x2, y2, val } = calculateGapCoords(rect, dir, nearest, viewport, centerX, centerY);
+    return val > 0 ? { x1, y1, x2, y2, value: val } : null;
+}
+
+function calculateGapCoords(rect, dir, nearest, viewport, centerX, centerY) {
+    let x1, y1, x2, y2, val;
+    switch(dir) {
+        case 'top':
+            y1 = nearest ? nearest.bottom : 0;
+            y2 = rect.top;
+            x1 = x2 = centerX;
+            val = Math.round(y2 - y1);
+            break;
+        case 'bottom':
+            y1 = rect.bottom;
+            y2 = nearest ? nearest.top : viewport.height;
+            x1 = x2 = centerX;
+            val = Math.round(y2 - y1);
+            break;
+        case 'left':
+            x1 = nearest ? nearest.right : 0;
+            x2 = rect.left;
+            y1 = y2 = centerY;
+            val = Math.round(x2 - x1);
+            break;
+        case 'right':
+            x1 = rect.right;
+            x2 = nearest ? nearest.left : viewport.width;
+            y1 = y2 = centerY;
+            val = Math.round(x2 - x1);
+            break;
+    }
+    return { x1, y1, x2, y2, val };
+}
+
+let cachedElements = null;
+let lastCacheTime = 0;
+
+function getNearestElementEdge(targetRect, dir) {
+    const now = Date.now();
+    if (!cachedElements || now - lastCacheTime > 100) {
+        cachedElements = Array.from(document.querySelectorAll('body *:not(.htmx-box-overlay):not(.htmx-layout-overlay):not(.htmx-inspector-tooltip):not(#htmx-svg-layer):not(.htmx-inspector-status)'))
+            .filter(el => {
+                const style = globalThis.getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 0 && r.height > 0;
+            });
+        lastCacheTime = now;
+    }
+
+    let nearestRect = null;
+    let minDistance = Infinity;
+
+    for (const el of cachedElements) {
+        const rect = el.getBoundingClientRect();
+        
+        // Exact match check
+        if (Math.abs(rect.top - targetRect.top) < 1 && Math.abs(rect.left - targetRect.left) < 1 && Math.abs(rect.width - targetRect.width) < 1) continue;
+
+        let distance = Infinity;
+        let overlapsProjection = false;
+
+        switch(dir) {
+            case 'top':
+                if (rect.bottom <= targetRect.top + 1) {
+                    distance = targetRect.top - rect.bottom;
+                    overlapsProjection = (rect.right > targetRect.left && rect.left < targetRect.right);
+                }
+                break;
+            case 'bottom':
+                if (rect.top >= targetRect.bottom - 1) {
+                    distance = rect.top - targetRect.bottom;
+                    overlapsProjection = (rect.right > targetRect.left && rect.left < targetRect.right);
+                }
+                break;
+            case 'left':
+                if (rect.right <= targetRect.left + 1) {
+                    distance = targetRect.left - rect.right;
+                    overlapsProjection = (rect.bottom > targetRect.top && rect.top < targetRect.bottom);
+                }
+                break;
+            case 'right':
+                if (rect.left >= targetRect.right - 1) {
+                    distance = rect.left - targetRect.right;
+                    overlapsProjection = (rect.bottom > targetRect.top && rect.top < targetRect.bottom);
+                }
+                break;
+        }
+
+        // We only care about elements that actually overlap the projection of our element
+        // or are extremely close and large (like a sidebar)
+        if (overlapsProjection && distance < minDistance && distance >= -1) {
+            minDistance = distance;
+            nearestRect = rect;
+        }
+    }
+
+    return nearestRect;
 }
 
 function drawGapBetween(rectA, rectB, sx, sy) {
@@ -661,8 +800,6 @@ function drawInternalMetrics(container, cRect, sx, sy) {
     const METRIC_COLOR = '#a855f7'; // Purple/Orchid for internal metrics
 
     // 1. Padding visualization (Start/End)
-    const first = children[0].getBoundingClientRect();
-    const last = children[children.length - 1].getBoundingClientRect();
     const style = globalThis.getComputedStyle(container);
     const pt = Number.parseFloat(style.paddingTop) || 0;
     const pl = Number.parseFloat(style.paddingLeft) || 0;
