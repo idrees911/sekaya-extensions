@@ -63,6 +63,11 @@ h1 {
   letter-spacing: 0.05em;
 }
 
+.aim{
+  width: 24px;
+  height: 24px;
+}
+
 .control-group {
   display: flex;
   justify-content: space-between;
