@@ -201,11 +201,11 @@ function hideTooltip() {
 
 function drawBoxModel(el) {
   const rect = el.getBoundingClientRect();
-  const style = window.getComputedStyle(el);
-  const scrollX = window.scrollX;
-  const scrollY = window.scrollY;
+  const style = globalThis.getComputedStyle(el);
+  const scrollX = globalThis.scrollX;
+  const scrollY = globalThis.scrollY;
 
-  const getVal = (prop) => parseFloat(style[prop]) || 0;
+  const getVal = (prop) => Number.parseFloat(style[prop]) || 0;
 
   const mt = getVal('marginTop');
   const mr = getVal('marginRight');
@@ -361,22 +361,25 @@ function updateTooltip(el, x, y) {
 
             <!-- Colors Section -->
             <div class="htmx-cell full-width colors">
-                <div class="htmx-color-block">
-                    <div class="htmx-color-preview-large" style="background:${color}"></div>
-                    <div class="htmx-color-info">
-                        <span class="htmx-label-mini">TEXT</span>
-                        <span class="htmx-color-value">${color.toUpperCase()}</span>
-                    </div>
-                </div>
-                
-                ${(bg && bg !== '#00000000' && bg !== 'transparent') ? `
-                <div class="htmx-color-block">
-                    <div class="htmx-color-preview-large" style="background:${bg}"></div>
-                    <div class="htmx-color-info">
-                        <span class="htmx-label-mini">BACKGROUND</span>
-                        <span class="htmx-color-value">${bg.toUpperCase()}</span>
-                    </div>
-                </div>` : ''}
+                 <div class="htmx-color-block">
+                     <div class="htmx-color-preview-large" style="background:${color}"></div>
+                     <div class="htmx-color-info">
+                         <div class="htmx-label-row">
+                             <span class="htmx-label-mini">TEXT</span>
+                             <span class="htmx-label-source">${getStyleOrigin(el, 'color') || 'unknown'}</span>
+                         </div>
+                         <span class="htmx-color-value">${color.toUpperCase()}</span>
+                     </div>
+                 </div>
+                 
+                 ${(bg && bg !== '#00000000' && bg !== 'transparent') ? `
+                 <div class="htmx-color-block">
+                     <div class="htmx-color-preview-large" style="background:${bg}"></div>
+                     <div class="htmx-color-info">
+                         <span class="htmx-label-mini">BACKGROUND</span>
+                         <span class="htmx-color-value">${bg.toUpperCase()}</span>
+                     </div>
+                 </div>` : ''}
             </div>
 
             <!-- Layout Details -->
@@ -429,4 +432,56 @@ function updateTooltip(el, x, y) {
    
    tooltip.style.top = `${top}px`;
    tooltip.style.left = `${left}px`;
+}
+
+/**
+ * Traces the source of a specific CSS property for an element.
+ * Returns the selector (class, ID, etc.) that effectively applies the style.
+ */
+function getStyleOrigin(el, prop) {
+    if (!el) return null;
+
+    try {
+        // 1. Check for inline styles first
+        if (el.style[prop]) return 'inline';
+
+        // 2. Iterate through all styling rules from highest specificity/last defined
+        const matchedRules = [];
+        const sheets = document.styleSheets;
+
+        for (let i = 0; i < sheets.length; i++) {
+            try {
+                const rules = sheets[i].cssRules || sheets[i].rules;
+                if (!rules) continue;
+
+                for (let j = 0; j < rules.length; j++) {
+                    const rule = rules[j];
+                    if (rule.type === CSSRule.STYLE_RULE && rule.style[prop] && el.matches(rule.selectorText)) {
+                        matchedRules.push(rule);
+                    }
+                }
+            } catch (e) {
+                // Ignore cross-origin stylesheet errors
+                continue;
+            }
+        }
+
+        // Return the most specific/last matching rule's selector
+        if (matchedRules.length > 0) {
+            // Note: Simplistic approach. Ideally we should calculate specificity, 
+            // but for a tooltip, the "last matched" in the DOM order is often the winner.
+            const winner = matchedRules[matchedRules.length - 1];
+            return winner.selectorText;
+        }
+
+        // 3. If not found, check parent (Inheritance)
+        if (prop === 'color' && el.parentElement) {
+            const parentOrigin = getStyleOrigin(el.parentElement, prop);
+            return parentOrigin ? `Inherited (${parentOrigin})` : null;
+        }
+    } catch (err) {
+        console.warn('HTMX Inspector Trace Error:', err);
+    }
+
+    return null;
 }

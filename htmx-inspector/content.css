@@ -261,9 +261,30 @@
 }
 
 .htmx-inspector-status:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.2);
-    background: #1e293b;
+    transform: translateY(-2px);
+    background: #f8fafc;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+/* Style Origin Labels */
+.htmx-label-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.htmx-label-source {
+    font-size: 9px;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .htmx-status-dot {
