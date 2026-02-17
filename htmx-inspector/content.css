@@ -55,10 +55,10 @@
 }
 
 .htmx-dims {
-  color: #64748b;
+  color: #1e293b;
   font-size: 11px;
   font-weight: 600;
-  background: #e2e8f0;
+  background: #cbd5e1;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -66,19 +66,19 @@
 .htmx-selector-bar {
   font-family: monospace;
   font-size: 11px;
-  color: #64748b;
+  color: #475569;
   line-height: 1.4;
   word-break: break-all;
 }
 
-.htmx-id-token { color: #ec4899; }
-.htmx-class-token { color: #6366f1; }
+.htmx-id-token { color: #db2777; }
+.htmx-class-token { color: #4f46e5; }
 
 .htmx-tooltip-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1px;
-  background: #e2e8f0; /* acts as border */
+  background: #94a3b8; /* acts as border */
   padding: 1px 0 0;
 }
 
@@ -106,14 +106,13 @@
 }
 
 .htmx-font-metrics {
-  display: flex;
+  display: inline-flex;
   gap: 12px;
   font-size: 16px;
-  color: #64748b;
-  background: #f1f5f9;
+  color: #334155;
+  background: #cbd5e1;
   padding: 4px 8px;
   border-radius: 4px;
-  display: inline-flex;
 }
 
 .htmx-cell.colors {
@@ -285,6 +284,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Inter-Element Distances (Pro SVG Layer) */
+#htmx-svg-layer {
+    transition: opacity 0.15s ease;
 }
 
 .htmx-status-dot {
