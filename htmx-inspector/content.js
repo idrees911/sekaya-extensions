@@ -345,8 +345,6 @@ function updateTooltip(el, x, y) {
        const fontWeight = s.fontWeight;
        const color = rgbToHex(s.color);
        const bg = rgbToHex(s.backgroundColor);
-       const display = s.display;
-       const position = s.position;
        const dims = `${Math.round(Number.parseFloat(s.width))} × ${Math.round(Number.parseFloat(s.height))}`;
 
        // Build formatted ID/Class string
@@ -362,58 +360,52 @@ function updateTooltip(el, x, y) {
        content += `
         <div class="htmx-tooltip-header">
             <div class="htmx-header-top">
-                <span class="htmx-tag-name">${el.tagName.toLowerCase()}</span>
+                <span class="htmx-tag-name">&lt;${el.tagName.toLowerCase()}&gt;</span>
                 <span class="htmx-dims">${dims}</span>
             </div>
-           <!--  ${selector ? `<div class="htmx-selector-bar">${selector}</div>` : ''} -->
         </div>
         
-        <div class="htmx-tooltip-grid">
-            <!-- Typography Hero Section -->
-            <div class="htmx-cell full-width typography">
-                <span class="htmx-label-mini">TYPOGRAPHY</span>
+        <div class="htmx-tooltip-content">
+            <!-- Typography Card -->
+            <div class="htmx-card typography">
                 <span class="htmx-font-name" style="font-family:${fontName}">${fontName}</span>
                 <div class="htmx-font-metrics">
-                    <span title="Size">${fontSize}<span class="htmx-monospace">px</span></span>
-                    <span style="color:#cbd5e1">|</span>
-                    <span title="Weight" style="font-weight:${fontWeight}; ">${fontWeight}</span>
-                    <span style="color:#cbd5e1">|</span>
-                    <span title="Line Height">${Math.round(Number.parseFloat(s.lineHeight)) || 'Normal'}<span class="htmx-monospace">px</span></span>
+                    <div class="htmx-metric-item">
+                        <span class="htmx-metric-label">Size</span>
+                        <span class="htmx-metric-value">${fontSize}<span class='htmx-metric-unit'>px</span></span>
+                    </div>
+                    <span style="opacity:0.3; ">|</span>
+                    <div class="htmx-metric-item">
+                        <span class="htmx-metric-label">Weight</span>
+                        <span class="htmx-metric-value" style="font-weight:${fontWeight}">${fontWeight}</span>
+                    </div>
+                    <span style="opacity:0.3">|</span>
+                    <div class="htmx-metric-item">
+                        <span class="htmx-metric-label">Line</span>
+                        <span class="htmx-metric-value">${Math.round(Number.parseFloat(s.lineHeight)) || '—'}<span class='htmx-metric-unit'>px</span></span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Colors Section -->
-            <div class="htmx-cell full-width colors">
-                 <div class="htmx-color-block">
-                     <div class="htmx-color-preview-large" style="background:${color}"></div>
-                     <div class="htmx-color-info">
-                         <div class="htmx-label-row">
-                             <span class="htmx-label-mini">TEXT</span>
-                             <span class="htmx-label-source">${getStyleOrigin(el, 'color') || 'unknown'}</span>
-                         </div>
-                         <span class="htmx-color-value">${color.toUpperCase()}</span>
+            <!-- Colors Card -->
+            <div class="htmx-card colors">
+                 <div class="htmx-color-row">
+                     <div class="htmx-color-preview-large" style="background:${color}; box-shadow: 0 0 0 1px rgba(0,0,0,0.05)"></div>
+                     <div class="htmx-color-details">
+                         <div class="htmx-color-value">${color.toUpperCase()}</div>
+                         <span class="htmx-label-source">${getStyleOrigin(el, 'color') || 'style'}</span>
                      </div>
                  </div>
                  
                  ${(bg && bg !== '#00000000' && bg !== 'transparent') ? `
-                 <div class="htmx-color-block">
-                     <div class="htmx-color-preview-large" style="background:${bg}"></div>
-                     <div class="htmx-color-info">
-                         <span class="htmx-label-mini">BACKGROUND</span>
-                         <span class="htmx-color-value">${bg.toUpperCase()}</span>
+                 <div class="htmx-color-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                     <div class="htmx-color-preview-large" style="background:${bg}; box-shadow: 0 0 0 1px rgba(0,0,0,0.05)"></div>
+                     <div class="htmx-color-details">
+                         <div class="htmx-color-value">${bg.toUpperCase()}</div>
+                         <span class="htmx-label-source">Background</span>
                      </div>
                  </div>` : ''}
             </div>
-
-            <!-- Layout Details -->
-          <!--   <div class="htmx-cell">
-                <span class="htmx-label">Display</span>
-                <span class="htmx-value">${display}</span>
-            </div>
-            <div class="htmx-cell">
-                <span class="htmx-label">Position</span>
-                <span class="htmx-value">${position}</span>
-            </div> -->
         </div>
        `;
    }

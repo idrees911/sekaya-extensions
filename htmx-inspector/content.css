@@ -8,22 +8,26 @@
 }
 
 /* Modern Tooltip Redesign */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* Sekaya-Inspired Tooltip Redesign */
 .htmx-inspector-tooltip {
   position: fixed;
   z-index: 2147483647;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: #ffffff; 
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
   padding: 0;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  font-family: 'Inter', system-ui, sans-serif;
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+  font-family: 'Outfit', sans-serif;
   color: #0f172a;
-  min-width: 240px;
+  min-width: 300px;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(8px);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  border: 1px solid rgba(21, 69, 147, 0.1);
 }
 
 .htmx-inspector-tooltip.visible {
@@ -31,129 +35,177 @@
   transform: translateY(0);
 }
 
-/* Modern Grid Tooltip Styles */
 .htmx-tooltip-header {
-  padding: 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #1e56b4, #154593); /* Sekaya Grad primary */
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  position: relative;
+  border-bottom: 3px solid #40b9e4; /* Sekaya Sky accent */
+}
+
+/* Glass effect for header */
+.htmx-tooltip-header::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
 }
 
 .htmx-header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .htmx-tag-name {
-  color: #0ea5e9;
-  font-weight: 700;
-  font-family: monospace;
-  font-size: 14px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
 }
 
 .htmx-dims {
-  color: #1e293b;
   font-size: 11px;
-  font-weight: 600;
-  background: #cbd5e1;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2); 
+  padding: 4px 10px;
+  border-radius: 12px; 
+  font-weight: 700; 
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
 }
 
-.htmx-selector-bar {
-  font-family: monospace;
-  font-size: 11px;
-  color: #475569;
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-.htmx-id-token { color: #db2777; }
-.htmx-class-token { color: #4f46e5; }
-
-.htmx-tooltip-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: #94a3b8; /* acts as border */
-  padding: 1px 0 0;
-}
-
-.htmx-cell {
-  background: white;
-  padding: 8px 12px;
+.htmx-tooltip-content {
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+  background: #f8fafc;
 }
 
-/* Typography & Color Specifics */
-.htmx-cell.full-width.typography {
-  padding: 12px;
-  background: white;
-  border-bottom: 1px dashed #e2e8f0;
+/* Card Improvements */
+.htmx-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.htmx-label-mini {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #154593;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  border: 1px solid #dbeafe;
+}
+
+/* Typography Card Refinement */
+.htmx-card.typography {
+  border-top: 4px solid #40b9e4;
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
 }
 
 .htmx-font-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #1e293b;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
   display: block;
 }
 
 .htmx-font-metrics {
-  display: inline-flex;
-  gap: 12px;
-  font-size: 16px;
-  color: #334155;
-  background: #cbd5e1;
-  padding: 4px 8px;
-  border-radius: 4px;
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
 }
 
-.htmx-cell.colors {
-    padding: 10px 12px;
+.htmx-metric-item {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.htmx-color-block {
-    flex: 1;
+.htmx-metric-label {
+    font-size: 9px;
+    color: #94a3b8;
+    /* text-transform: uppercase; */
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.htmx-metric-unit {
+    font-size: 10px;
+    opacity: 0.9;
+    margin-left: 1px;
+    
+}
+
+.htmx-metric-value {
+    color: #154593;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+/* Colors Card Refinement */
+.htmx-card.colors {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.htmx-color-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
 }
 
 .htmx-color-preview-large {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
-.htmx-color-info {
-    display: flex;
-    flex-direction: column;
+.htmx-color-details {
+    flex: 1;
+    margin-left: 12px;
 }
 
 .htmx-color-value {
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: #334155;
-    font-weight: 500;
-} 
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 2px;
+}
 
-.htmx-label-mini {
-    font-size: 9px;
-    text-transform: uppercase;
-    color: #94a3b8;
-    font-weight: 700;
+.htmx-label-source {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .htmx-monospace {
