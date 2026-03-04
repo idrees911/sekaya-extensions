@@ -15,23 +15,173 @@ let svgLayer = null; // High-performance SVG layer for distances
 // Initialize
 chrome.storage.local.get(['isEnabled', 'config'], (data) => {
   if (data.config) config = { ...config, ...data.config };
+  
+  // Inject Fixed UI immediately
+  injectControlPanel();
+  
+  // If previously enabled, start the inspector
   if (data.isEnabled) {
       document.documentElement.classList.add('htmx-inspector-active');
       enable();
+      updatePanelUI(true);
   }
 });
 
-// Messages
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'TOGGLE_INSPECTOR') { // Fallback legacy
-    if (msg.isEnabled) enable();
-    else disable();
-  } else if (msg.type === 'UPDATE_CONFIG') {
-    if (msg.data.config) config = { ...config, ...msg.data.config };
-    if (msg.data.isEnabled) enable();
-    else disable();
+// Watch for storage changes (e.g. from background script toggle)
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.isEnabled) {
+      const isNowEnabled = changes.isEnabled.newValue;
+      if (isNowEnabled) { 
+          enable(); 
+          updatePanelUI(true); 
+      } else { 
+          disable(); 
+          updatePanelUI(false); 
+      }
   }
 });
+
+// Messages - Keep legacy support just in case, but main control is now local
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'TOGGLE_INSPECTOR') { 
+    if (msg.isEnabled) { enable(); updatePanelUI(true); }
+    else { disable(); updatePanelUI(false); }
+  } else if (msg.type === 'UPDATE_CONFIG') { // Config sync across tabs
+    if (msg.data.config) {
+        config = { ...config, ...msg.data.config };
+        updatePanelConfigUI(); // Sync checkboxes
+    }
+  }
+});
+
+function injectControlPanel() {
+    if (document.getElementById('htmx-control-panel')) return;
+
+    // 1. Floating Button
+    const btn = document.createElement('div');
+    btn.className = 'htmx-floating-btn';
+    btn.innerHTML = `<img src="${chrome.runtime.getURL('assets/target.png')}" alt="Inspect">`;
+    btn.title = "Toggle Inspector Panel";
+    btn.onclick = () => {
+        const panel = document.getElementById('htmx-control-panel');
+        panel.classList.toggle('visible');
+    };
+    document.body.appendChild(btn);
+
+    // 2. Control Panel
+    const panel = document.createElement('div');
+    panel.id = 'htmx-control-panel';
+    panel.className = 'htmx-panel-container htmx-inspector-root';
+    panel.innerHTML = `
+        <div class="htmx-panel-header">
+            <img src="${chrome.runtime.getURL('assets/target.png')}" class="htmx-panel-logo">
+            <div class="htmx-panel-title">
+                <h1>HTMX<span>Inspector</span></h1>
+            </div>
+        </div>
+        <div class="htmx-panel-content">
+            <!-- Master Toggle -->
+            <div class="htmx-toggle-card">
+                <div class="htmx-toggle-label">
+                    Inspection Mode
+                    <span class="htmx-status-text" id="htmx-status-text">OFFLINE</span>
+                </div>
+                <label class="htmx-switch">
+                    <input type="checkbox" id="htmx-master-toggle">
+                    <span class="htmx-slider"></span>
+                </label>
+            </div>
+
+            <div style="font-size:10px; font-weight:800; color:#64748b; margin-top:12px; letter-spacing:0.05em">ACTIVE METRICS</div>
+
+            <!-- Features -->
+            <div class="htmx-features-list" id="htmx-features-list">
+                <label class="htmx-feature-row">
+                    <div class="htmx-feature-icon htmx-icon-s">S</div>
+                    <div class="htmx-feature-info">
+                        <span class="htmx-feature-name">Styles</span>
+                        <span class="htmx-feature-desc">CSS tracing</span>
+                    </div>
+                    <input type="checkbox" id="htmx-opt-styles" checked>
+                    <div class="htmx-checkbox"></div>
+                </label>
+                
+                <label class="htmx-feature-row">
+                    <div class="htmx-feature-icon htmx-icon-b">B</div>
+                    <div class="htmx-feature-info">
+                        <span class="htmx-feature-name">Box Model</span>
+                        <span class="htmx-feature-desc">Margins & pad</span>
+                    </div>
+                    <input type="checkbox" id="htmx-opt-boxmodel" checked>
+                    <div class="htmx-checkbox"></div>
+                </label>
+
+                <label class="htmx-feature-row">
+                    <div class="htmx-feature-icon htmx-icon-l">L</div>
+                    <div class="htmx-feature-info">
+                        <span class="htmx-feature-name">Layout</span>
+                        <span class="htmx-feature-desc">Flex/Grid</span>
+                    </div>
+                    <input type="checkbox" id="htmx-opt-layout" checked>
+                    <div class="htmx-checkbox"></div>
+                </label>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+
+    // 3. Bind Events
+    const masterToggle = document.getElementById('htmx-master-toggle');
+    const featureList = document.getElementById('htmx-features-list');
+    
+    // Master Toggle Logic
+    masterToggle.addEventListener('change', (e) => {
+        const active = e.target.checked;
+        if (active) enable(); else disable();
+        
+        // UI Updates
+        updatePanelUI(active);
+        
+        // Persist
+        chrome.storage.local.set({ isEnabled: active });
+    });
+
+    // Feature Toggles Logic
+    ['styles', 'boxmodel', 'layout'].forEach(key => {
+        const el = document.getElementById(`htmx-opt-${key}`);
+        el.addEventListener('change', (e) => {
+            config[key] = e.target.checked;
+            // Update storage
+            chrome.storage.local.set({ config });
+        });
+    });
+
+    // Initialize UI state from config
+    updatePanelConfigUI();
+}
+
+function updatePanelUI(active) {
+    const statusText = document.getElementById('htmx-status-text');
+    const masterToggle = document.getElementById('htmx-master-toggle');
+    const featureList = document.getElementById('htmx-features-list');
+
+    if (statusText) {
+        statusText.textContent = active ? 'ONLINE' : 'OFFLINE';
+        statusText.style.color = active ? '#10b981' : '#64748b';
+    }
+    if (masterToggle) masterToggle.checked = active;
+    if (featureList) {
+        if (active) featureList.classList.remove('disabled');
+        else featureList.classList.add('disabled');
+    }
+}
+
+function updatePanelConfigUI() {
+    ['styles', 'boxmodel', 'layout'].forEach(key => {
+        const el = document.getElementById(`htmx-opt-${key}`);
+        if (el) el.checked = config[key];
+    });
+}
 
 function enable() {
   if (isEnabled) return;
@@ -39,13 +189,19 @@ function enable() {
   document.documentElement.classList.add('htmx-inspector-active');
   tooltip = createTooltip();
   svgLayer = createSvgLayer();
+  // Status badge is now redundant with the floating panel, but we can keep it or remove it.
+  // The user asked for "Floating button... click to appear popup", so maybe we don't need the bottom badge anymore?
+  // Let's keep it for now as a persistent indicator if the panel is closed.
   toggleStatusBadge(true);
   
+  showToast('Inspection Mode Active', 'success');
+
   document.addEventListener('mouseover', onHover);
   document.addEventListener('mouseout', onOut);
   document.addEventListener('click', onClick, { capture: true }); // Capturing to prevent other clicks
   document.addEventListener('scroll', onScroll, { capture: true, passive: true });
 }
+
 
 function disable() {
   isEnabled = false;
@@ -55,6 +211,8 @@ function disable() {
   document.removeEventListener('click', onClick, { capture: true });
   document.removeEventListener('scroll', onScroll);
   
+  showToast('Inspection Mode Disabled', 'info');
+
   // Cleanup Highlights
   document.querySelectorAll('.' + INSPECT_CLASS).forEach(el => el.classList.remove(INSPECT_CLASS));
   
@@ -123,11 +281,13 @@ function onHover(e) {
   if (lockedElement) return;
 
   const target = e.target;
-    // Ignore our own UI elements (Tooltip, Layout Overlay, Status Badge)
+    // Ignore our own UI elements (Tooltip, Layout Overlay, Status Badge, AND Floating Panel/Button)
     if (!target || 
         target.closest('.htmx-inspector-tooltip') || 
         target.closest('.htmx-layout-overlay') || 
-        target.closest('.htmx-inspector-status')) {
+        target.closest('.htmx-inspector-status') ||
+        target.closest('.htmx-floating-btn') ||
+        target.closest('.htmx-panel-container')) {
         return;
     }
   if (hoveredElement === target) return;
@@ -135,6 +295,7 @@ function onHover(e) {
   hoveredElement = target;
   renderInspection(target);
 }
+
 
 // Logic to render overlays/tooltip (extracted for reuse)
 function renderInspection(target, mouseX, mouseY) {
@@ -166,9 +327,11 @@ function renderInspection(target, mouseX, mouseY) {
 function onClick(e) {
     if (!isEnabled) return;
     
-    // Allow interacting with our own UI (Tooltip, Status Badge)
+    // Allow interacting with our own UI (Tooltip, Status Badge, Panel, Button)
     if (e.target.closest('.htmx-inspector-tooltip') || 
-        e.target.closest('.htmx-inspector-status')) {
+        e.target.closest('.htmx-inspector-status') ||
+        e.target.closest('.htmx-floating-btn') || 
+        e.target.closest('.htmx-panel-container')) {
         return;
     }
 
@@ -827,3 +990,30 @@ function drawInternalMetrics(container, cRect, sx, sy) {
         }
     }
 }
+
+function showToast(message, type = 'info') {
+    let toast = document.getElementById('htmx-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'htmx-toast';
+        toast.className = 'htmx-toast';
+        toast.innerHTML = '<div class="htmx-toast-icon"></div><span class="htmx-toast-msg"></span>';
+        document.body.appendChild(toast);
+    }
+
+    toast.className = 'htmx-toast ' + type;
+    toast.querySelector('.htmx-toast-icon').textContent = type === 'success' ? '✓' : 'i';
+    toast.querySelector('.htmx-toast-msg').textContent = message;
+
+    // Trigger reflow
+    void toast.offsetWidth;
+
+    toast.classList.add('visible');
+
+    // Hide after 3s
+    if (toast.timeout) clearTimeout(toast.timeout);
+    toast.timeout = setTimeout(() => {
+        toast.classList.remove('visible');
+    }, 3000);
+}
+

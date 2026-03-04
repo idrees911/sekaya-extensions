@@ -347,6 +347,7 @@
 .htmx-inspector-status:hover {
     transform: translateY(-2px);
     background: #f8fafc;
+    color: #0f172a;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
@@ -390,3 +391,303 @@
     0%, 100% { opacity: 1; }
     50% { opacity: .5; }
 }
+
+/* =========================================
+   FLOATING CONTROL PANEL & BUTTON
+   ========================================= */
+
+/* Scoped Variables for Panel */
+.htmx-inspector-root {
+  --p-blue: #154593;
+  --p-sky: #40b9e4;
+  --p-white: #ffffff;
+  --p-bg: #f8fafc;
+  --p-border: #e2e8f0;
+  --p-text: #0f172a;
+  --p-muted: #64748b;
+  --grad-primary: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1);
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Floating Toggle Button */
+.htmx-floating-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(21, 69, 147, 0.3);
+  z-index: 2147483647; /* Max Z-Index */
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.2);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+}
+
+.htmx-floating-btn:hover {
+  transform: scale(1.05);
+}
+
+.htmx-floating-btn img {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+  display: block;
+}
+
+/* Panel Container */
+.htmx-panel-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 300px;
+  background: #f8fafc;
+  border-radius: 20px;
+  z-index: 2147483646;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 14px;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.htmx-panel-container.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* --- Ported Panel Styles (Scoped) --- */
+
+.htmx-panel-header {
+  background: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+}
+
+.htmx-panel-logo {
+  width: 24px;
+  height: 24px;
+  background: rgba(255,255,255,0.2);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.htmx-panel-title h1 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1;
+  color: white;
+}
+
+.htmx-panel-title span {
+  font-weight: 300;
+  opacity: 0.8;
+}
+
+.htmx-panel-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Toggle Card */
+.htmx-toggle-card {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.htmx-toggle-label {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  color: #0f172a;
+}
+
+.htmx-status-text {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Switch */
+.htmx-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  display: inline-block;
+}
+.htmx-switch input { opacity: 0; width: 0; height: 0; }
+.htmx-slider {
+  position: absolute;
+  cursor: pointer !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+  border-radius: 24px;
+}
+.htmx-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.htmx-switch input:checked + .htmx-slider { background: #154593; }
+.htmx-switch input:checked + .htmx-slider:before { transform: translateX(20px); }
+
+/* Feature List */
+.htmx-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.htmx-feature-row {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer !important;
+  gap: 12px;
+  transition: border 0.2s;
+}
+
+.htmx-feature-row:hover {
+  border-color: #40b9e4;
+}
+
+.htmx-feature-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.htmx-icon-s { background: #6366f1; }
+.htmx-icon-b { background: #f59e0b; }
+.htmx-icon-l { background: #10b981; }
+
+.htmx-feature-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.htmx-feature-name { font-weight: 700; font-size: 13px; color: #0f172a; }
+.htmx-feature-desc { font-size: 10px; color: #64748b; }
+
+.htmx-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.htmx-feature-row input { display: none; }
+.htmx-feature-row input:checked ~ .htmx-checkbox {
+  background: #154593;
+  border-color: #154593;
+}
+.htmx-feature-row input:checked ~ .htmx-checkbox::after {
+  content: '✓';
+  color: white;
+  font-weight: 900;
+  font-size: 10px;
+}
+
+/* Disabled State */
+.htmx-features-list.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(0.5);
+}
+
+
+/* Toast Notification */
+.htmx-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #0f172a;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 2147483647;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.htmx-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.htmx-toast-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.htmx-toast.success .htmx-toast-icon {
+    background: #22c55e;
+    color: white;
+}
+
+.htmx-toast.info .htmx-toast-icon {
+    background: #94a3b8;
+    color: white;
+}
+
