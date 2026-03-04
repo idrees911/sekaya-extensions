@@ -3,52 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTMX Inspector</title>
+  <title>Sekaya HTMX Inspector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    
-    <header>
-      <h1>Web Inspector</h1>
-      <!-- <div class="badge">Pro</div> -->
-      <img src="assets/target.png" alt="HTMX Inspector" class="aim">
+  <div class="app-container">
+    <header class="app-header">
+       <div class="brand">
+         <img src="assets/target.png" alt="Logo" class="logo">
+         <div class="brand-text">
+           <h1>HTMX<span>Inspector</span></h1>
+           <!-- <p>V1.0.0 </p> -->
+         </div>
+       </div>
     </header>
-    
-    <main>
-      <div class="control-group main-toggle">
-        <label for="inspector-toggle" class="toggle-label">
-          <span>Inspection Mode</span>
-          <span class="status-indicator" id="status-text">Off</span>
-        </label>
-        <label class="toggle-switch" for="inspector-toggle">
-          <input type="checkbox" id="inspector-toggle">
-          <span class="slider"></span>
-        </label>
+
+    <main class="main-content">
+      <!-- Main Toggle Card -->
+      <div class="dash-card main-toggle-card">
+        <div class="card-header">
+          <div class="label-group">
+            <span class="card-title">Inspection Mode</span>
+            <span class="status-indicator" id="status-text">OFFLINE</span>
+          </div>
+          <label class="sekaya-toggle">
+            <input type="checkbox" id="inspector-toggle">
+            <span class="sekaya-slider"></span>
+          </label>
+        </div>
       </div>
 
-      <div class="features-grid" id="features-panel">
-        <label class="feature-checkbox">
+      <!-- Features Section -->
+      <div class="section-label">Active Metrics</div>
+      
+      <div class="features-panel" id="features-panel">
+        <label class="action-card">
           <input type="checkbox" id="opt-styles" checked>
-          <span class="checkbox-box"></span>
-          <span class="feature-label">Styles</span>
+          <div class="card-content">
+            <div class="icon-box styles">S</div>
+            <div class="text-group">
+              <span class="feature-name">Styles</span>
+              <span class="feature-desc">CSS tracing & sources</span>
+            </div>
+            <div class="sekaya-checkbox"></div>
+          </div>
         </label>
-        <label class="feature-checkbox">
+
+        <label class="action-card">
           <input type="checkbox" id="opt-boxmodel" checked>
-          <span class="checkbox-box"></span>
-          <span class="feature-label">Box Model</span>
+          <div class="card-content">
+            <div class="icon-box boxmodel">B</div>
+            <div class="text-group">
+              <span class="feature-name">Box Model</span>
+              <span class="feature-desc">Padding & margins</span>
+            </div>
+            <div class="sekaya-checkbox"></div>
+          </div>
         </label>
-        <label class="feature-checkbox">
+
+        <label class="action-card">
           <input type="checkbox" id="opt-layout" checked>
-          <span class="checkbox-box"></span>
-          <span class="feature-label">Layout</span>
+          <div class="card-content">
+            <div class="icon-box layout">L</div>
+            <div class="text-group">
+              <span class="feature-name">Layout</span>
+              <span class="feature-desc">Alignment & spacing</span>
+            </div>
+            <div class="sekaya-checkbox"></div>
+          </div>
         </label>
       </div>
-
-      <!-- <p class="description">
-        Toggle to inspect element styles, box model, and layout details.
-      </p> -->
     </main>
+
+    <footer class="app-footer">
+      <p>© 2026 SEKAYA ASSISTANCE</p>
+    </footer>
   </div>
   <script src="popup.js"></script>
 </body>
