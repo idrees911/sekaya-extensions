@@ -11,13 +11,11 @@ let config = {
 let tooltip = null;
 let currentOverlay = null;
 let svgLayer = null; // High-performance SVG layer for distances
+let hideUITimer = null; // Timer for auto-hiding the UI
 
 // Initialize
 chrome.storage.local.get(['isEnabled', 'config'], (data) => {
   if (data.config) config = { ...config, ...data.config };
-  
-  // Inject Fixed UI immediately
-  injectControlPanel();
   
   // If previously enabled, start the inspector
   if (data.isEnabled) {
@@ -184,6 +182,19 @@ function updatePanelConfigUI() {
 }
 
 function enable() {
+  if (hideUITimer) {
+      clearTimeout(hideUITimer);
+      hideUITimer = null;
+  }
+
+  // Restore visibility just in case we are in fade-out state
+  const panel = document.getElementById('htmx-control-panel');
+  const btn = document.querySelector('.htmx-floating-btn');
+  if (panel) { panel.style.opacity = ''; panel.style.transform = ''; panel.style.transition = ''; }
+  if (btn) { btn.style.opacity = ''; btn.style.transform = ''; btn.style.transition = ''; }
+  
+  injectControlPanel(); // Ensure UI exists before enabling
+  
   if (isEnabled) return;
   isEnabled = true;
   document.documentElement.classList.add('htmx-inspector-active');
@@ -211,7 +222,39 @@ function disable() {
   document.removeEventListener('click', onClick, { capture: true });
   document.removeEventListener('scroll', onScroll);
   
-  showToast('Inspection Mode Disabled', 'info');
+  showToast('Inspector Deactivated (UI will hide in 3s)', 'info');
+
+  // Start timer to hide UI
+  if (hideUITimer) clearTimeout(hideUITimer);
+  hideUITimer = setTimeout(() => {
+      const panel = document.getElementById('htmx-control-panel');
+      const btn = document.querySelector('.htmx-floating-btn');
+      
+      // Animate out
+      if (panel) {
+          panel.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          panel.style.opacity = '0';
+          panel.style.transform = 'translateX(20px)';
+      }
+      if (btn) {
+          btn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          btn.style.opacity = '0';
+          btn.style.transform = 'scale(0.8)';
+      }
+
+      // Remove after animation
+      setTimeout(() => {
+          if (isEnabled) {
+              // User re-enabled during fade out
+              if (panel) { panel.style.opacity = ''; panel.style.transform = ''; }
+              if (btn) { btn.style.opacity = ''; btn.style.transform = ''; }
+              return;
+          }
+          if (panel) panel.remove();
+          if (btn) btn.remove();
+          hideUITimer = null;
+      }, 300);
+  }, 3000);
 
   // Cleanup Highlights
   document.querySelectorAll('.' + INSPECT_CLASS).forEach(el => el.classList.remove(INSPECT_CLASS));
