@@ -7,26 +7,27 @@
   position: relative !important;
 }
 
-/* Friendly & Attractive Tooltip Redesign */
+/* Tooltip Design - Inspired by Control Panel */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 /* Main Tooltip Container */
 .htmx-inspector-tooltip {
   position: fixed;
   z-index: 2147483647;
-  background: #ffffff;
+  background: #f8fafc;
   border-radius: 20px;
   padding: 0;
-  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
   font-family: 'Outfit', sans-serif;
   color: #0f172a;
   min-width: 290px;
   max-width: 320px;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(12px) scale(0.95);
-  transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 0.2s ease, transform 0.2s ease;
   overflow: hidden;
+  border: 1px solid #e2e8f0;
 }
 
 .htmx-inspector-tooltip.visible {
@@ -34,23 +35,15 @@
   transform: translateY(0) scale(1);
 }
 
-/* Beautiful Gradient Header */
+/* Light Header - Matching Metric Style */
 .htmx-tooltip-header {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  padding: 16px 20px;
+  background: #f8fafc;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   position: relative;
-}
-
-/* Add a subtle pattern/glow to header */
-.htmx-tooltip-header::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at top right, rgba(255,255,255,0.2) 0%, transparent 60%);
-  pointer-events: none;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .htmx-header-top {
@@ -61,88 +54,99 @@
   z-index: 1;
 }
 
-/* Cute Tag Badge */
+/* Tag Badge - Light Style */
 .htmx-tag-name {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: #ffffff;
+  color: #1c56b4;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  letter-spacing: 0.02em;
 }
 
 .htmx-dims {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.95);
+  font-size: 12px;
+  color: #64748b;
   font-weight: 600;
+  background: #ffffff;
+   padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .htmx-selector {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  color: #475569;
   line-height: 1.4;
   position: relative;
   z-index: 1;
   font-weight: 500;
 }
-.htmx-id-token { color: #fdf4ff; font-weight: 700; }
-.htmx-class-token { color: #e0e7ff; }
+.htmx-id-token { color: #1c56b4; font-weight: 700; }
+.htmx-class-token { color: #3b82f6; }
 
-/* Content Body */
+/* Content Body - Matching Panel Padding */
 .htmx-tooltip-content {
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   background: #f8fafc;
 }
 
-/* Soft Cards */
+/* Cards - Matching Panel Feature Rows */
 .htmx-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* Typography Title */
 .htmx-font-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
   display: block;
+  margin-bottom: 2px;
 }
 
-/* Metric Bubbles */
+/* Metric Grid - Matching Panel Layout */
 .htmx-font-metrics, .htmx-layout-grid {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 .htmx-font-metrics {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 }
 .htmx-layout-grid {
   grid-template-columns: repeat(2, 1fr);
 }
 
 .htmx-metric-item {
-  background: #f1f5f9;
-  padding: 8px 10px;
-  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  border: 1px solid transparent;
-  transition: border-color 0.2s;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 .htmx-metric-item:hover {
-  border-color: #cbd5e1;
+  border-color: #40b9e4;
+  box-shadow: 0 1px 3px rgba(64, 185, 228, 0.1);
+}
+
+/* Typography metrics - larger and more prominent */
+.htmx-font-metrics .htmx-metric-item {
+  padding: 16px 12px;
 }
 
 .htmx-metric-label {
@@ -156,36 +160,46 @@
 .htmx-metric-value {
   color: #0f172a;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   display: flex;
   align-items: baseline;
   gap: 2px;
 }
 
+/* Typography metrics - even larger values */
+.htmx-font-metrics .htmx-metric-value {
+  font-size: 18px;
+  font-weight: 800;
+}
+
 .htmx-metric-unit {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: 10px;
+  color: #64748b;
   font-weight: 600;
 }
 
-/* Colors Grid */
+/* Colors Grid - Matching Panel Style */
 .htmx-colors-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .htmx-color-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .htmx-color-preview-large {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%; /* Circle looks friendlier */
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.05);
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -205,25 +219,26 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex: 1;
 }
 
 .htmx-color-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0f172a;
   text-transform: uppercase;
 }
 
 .htmx-label-source {
-  font-size: 11px;
+  font-size: 10px;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Extra flex layout infos */
 .htmx-extra-metrics {
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;

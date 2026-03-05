@@ -590,19 +590,16 @@ function updateTooltip(el, x, y) {
             content += `
             <!-- Typography Card -->
             <div class="htmx-card typography">
+                <div style="font-size:9px; font-weight:800; color:#64748b; margin-bottom:6px; letter-spacing:0.05em;">TYPOGRAPHY</div>
                 <span class="htmx-font-name" style="font-family:${fontName}">${fontName}</span>
                 <div class="htmx-font-metrics">
                     <div class="htmx-metric-item">
                         <span class="htmx-metric-label">Size</span>
-                        <span class="htmx-metric-value">${fontSize}<span class='htmx-metric-unit'>px</span></span>
+                        <span class="htmx-metric-value" style="font-size:24px">${fontSize}<span class='htmx-metric-unit'>px</span></span>
                     </div>
                     <div class="htmx-metric-item">
                         <span class="htmx-metric-label">Weight</span>
-                        <span class="htmx-metric-value" style="font-weight:${fontWeight}">${fontWeight}</span>
-                    </div>
-                    <div class="htmx-metric-item">
-                        <span class="htmx-metric-label">Line</span>
-                        <span class="htmx-metric-value">${Math.round(Number.parseFloat(s.lineHeight)) || '—'}<span class='htmx-metric-unit'>px</span></span>
+                        <span class="htmx-metric-value" style="font-size:24px; font-weight:${fontWeight}">${fontWeight}</span>
                     </div>
                 </div>
             </div>`;
@@ -709,18 +706,19 @@ function updateTooltip(el, x, y) {
 
             content += `
              <div class="htmx-card layout">
+                 <div style="font-size:9px; font-weight:800; color:#64748b; margin-bottom:6px; letter-spacing:0.05em;">LAYOUT</div>
                  <div class="htmx-layout-grid">
                      <!-- Display -->
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Display</span>
-                         <span class="htmx-metric-value" style="text-transform:lowercase; font-size: 14px;">${display}</span>
+                         <span class="htmx-metric-value" style="text-transform:lowercase; font-size: 13px;">${display}</span>
                      </div>
                      
                      <!-- Position -->
                      ${position !== 'static' ? `
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Position</span>
-                         <span class="htmx-metric-value" style="font-size: 14px;">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
+                         <span class="htmx-metric-value" style="font-size: 13px;">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
                      </div>` : ''}
 
                      <!-- Border -->
@@ -756,6 +754,7 @@ function updateTooltip(el, x, y) {
             <!-- Colors Card (Only shown if text mode selected, or explicitly if it has interesting colors) -->
             ${isTextMode ? `
             <div class="htmx-card colors">
+                 <div style="font-size:9px; font-weight:800; color:#64748b; margin-bottom:6px; letter-spacing:0.05em;">COLORS</div>
                  <div class="htmx-colors-grid">
                      <div class="htmx-color-row">
                          <div class="htmx-color-preview-large" style="background:${color};"></div>
