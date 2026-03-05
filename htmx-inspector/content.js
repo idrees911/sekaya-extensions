@@ -14,40 +14,33 @@ let svgLayer = null; // High-performance SVG layer for distances
 let hideUITimer = null; // Timer for auto-hiding the UI
 
 // Initialize
-chrome.storage.local.get(['isEnabled', 'config'], (data) => {
+chrome.storage.local.get(['config'], (data) => {
   if (data.config) config = { ...config, ...data.config };
   
-  // If previously enabled, start the inspector
-  if (data.isEnabled) {
-      document.documentElement.classList.add('htmx-inspector-active');
-      enable();
-      updatePanelUI(true);
-  }
+  // No longer auto-enable based on global storage
 });
 
 // Watch for storage changes (e.g. from background script toggle)
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'local' && changes.isEnabled) {
-      const isNowEnabled = changes.isEnabled.newValue;
-      if (isNowEnabled) { 
-          enable(); 
-          updatePanelUI(true); 
-      } else { 
-          disable(); 
-          updatePanelUI(false); 
-      }
-  }
+  // Only sync config if needed, ignore isEnabled for activation
 });
 
 // Messages - Keep legacy support just in case, but main control is now local
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'TOGGLE_INSPECTOR') { 
-    if (msg.isEnabled) { enable(); updatePanelUI(true); }
+    // If no specific state requested, toggle based on current state
+    const targetState = (typeof msg.isEnabled !== 'undefined') ? msg.isEnabled : !isEnabled;
+    if (targetState) { enable(); updatePanelUI(true); }
     else { disable(); updatePanelUI(false); }
   } else if (msg.type === 'UPDATE_CONFIG') { // Config sync across tabs
     if (msg.data.config) {
         config = { ...config, ...msg.data.config };
         updatePanelConfigUI(); // Sync checkboxes
+    }
+    // Allow popup to control enablement for the specific tab
+    if (typeof msg.data.isEnabled !== 'undefined') {
+        if (msg.data.isEnabled) { enable(); updatePanelUI(true); }
+        else { disable(); updatePanelUI(false); }
     }
   }
 });
@@ -140,8 +133,7 @@ function injectControlPanel() {
         // UI Updates
         updatePanelUI(active);
         
-        // Persist
-        chrome.storage.local.set({ isEnabled: active });
+        // No longer persist isEnabled globally to avoid affecting other tabs
     });
 
     // Feature Toggles Logic
@@ -546,6 +538,12 @@ function updateTooltip(el, x, y) {
            return "#" + r + g + b;
        };
        
+       // Heuristic: Is this a text element or a structural container?
+       const textTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'SPAN', 'A', 'LI', 'LABEL', 'BUTTON', 'I', 'B', 'STRONG', 'EM', 'INPUT', 'TEXTAREA'];
+       // Also check if it has direct text node children violating a length threshold
+       const hasDirectText = Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim().length > 0);
+       const isTextMode = textTags.includes(el.tagName) || hasDirectText;
+
        const fontName = s.fontFamily.split(',')[0].replace(/['"]/g, '');
        const fontSize = Math.round(Number.parseFloat(s.fontSize));
        const fontWeight = s.fontWeight;
@@ -571,7 +569,10 @@ function updateTooltip(el, x, y) {
             </div>
         </div>
         
-        <div class="htmx-tooltip-content">
+        <div class="htmx-tooltip-content">`;
+
+        if (isTextMode) {
+            content += `
             <!-- Typography Card -->
             <div class="htmx-card typography">
                 <span class="htmx-font-name" style="font-family:${fontName}">${fontName}</span>
@@ -591,15 +592,106 @@ function updateTooltip(el, x, y) {
                         <span class="htmx-metric-value">${Math.round(Number.parseFloat(s.lineHeight)) || '—'}<span class='htmx-metric-unit'>px</span></span>
                     </div>
                 </div>
-            </div>
+            </div>`;
+        } else {
+            // Layout Mode for Structural Elements
+            const display = s.display;
+            const position = s.position;
+            const zIndex = s.zIndex === 'auto' ? null : s.zIndex;
+            
+            // Background
+            let bgInfo = null;
+            if (bg && bg !== '#00000000' && bg !== 'transparent') {
+                bgInfo = { color: bg, label: 'Background' };
+            }
 
-            <!-- Colors Card -->
+            // Border
+            let borderInfo = null;
+            if (s.borderWidth !== '0px' && s.borderStyle !== 'none') {
+                 const borderColor = rgbToHex(s.borderColor);
+                 borderInfo = `${s.borderWidth} ${s.borderStyle} <span style="display:inline-block; width:8px; height:8px; background:${borderColor}; border:1px solid #ccc; border-radius:50%; margin-left:4px;"></span>`;
+            }
+
+            // Box Shadow
+            let shadowInfo = null;
+            if (s.boxShadow !== 'none') {
+                shadowInfo = s.boxShadow;
+            }
+            
+            // Flex/Grid specific info
+            let extraInfo = '';
+            if (display.includes('flex')) {
+                extraInfo = `
+                 <div class="htmx-metric-item">
+                    <span class="htmx-metric-label">Align</span>
+                    <span class="htmx-metric-value">${s.justifyContent.replace('normal','start')} / ${s.alignItems.replace('normal','stretch')}</span>
+                 </div>`;
+                 if (s.gap !== 'normal' && s.gap !== '0px') {
+                     extraInfo += `<div class="htmx-metric-item"><span class="htmx-metric-label">Gap</span><span class="htmx-metric-value">${s.gap}</span></div>`;
+                 }
+            } else if (display.includes('grid')) {
+                const cols = s.gridTemplateColumns.split(' ').length;
+                extraInfo = `
+                 <div class="htmx-metric-item">
+                    <span class="htmx-metric-label">Grid</span>
+                    <span class="htmx-metric-value">${cols} cols</span>
+                 </div>`;
+            }
+
+            content += `
+             <div class="htmx-card layout">
+                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; margin-bottom:12px;">
+                     <!-- Display -->
+                     <div class="htmx-metric-item">
+                         <span class="htmx-metric-label">Display</span>
+                         <span class="htmx-metric-value" style="text-transform:uppercase;">${display}</span>
+                     </div>
+                     
+                     <!-- Position -->
+                     ${position !== 'static' ? `
+                     <div class="htmx-metric-item">
+                         <span class="htmx-metric-label">Position</span>
+                         <span class="htmx-metric-value">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
+                     </div>` : ''}
+
+                     <!-- Border -->
+                     ${borderInfo ? `
+                     <div class="htmx-metric-item">
+                         <span class="htmx-metric-label">Border</span>
+                         <span class="htmx-metric-value" style="display:flex; align-items:center;">${borderInfo}</span>
+                     </div>` : ''}
+
+                     <!-- Background Condensed -->
+                     ${bgInfo ? `
+                     <div class="htmx-metric-item">
+                         <span class="htmx-metric-label">Background</span>
+                         <div style="display:flex; align-items:center; gap:6px">
+                            <div style="width:12px; height:12px; background:${bgInfo.color}; border:1px solid #cbd5e1; border-radius:3px;"></div>
+                            <span class="htmx-metric-value" style="font-size:11px">${bgInfo.color.toUpperCase()}</span>
+                         </div>
+                     </div>` : ''}
+
+                     <!-- Shadow (Full Row) -->
+                     ${shadowInfo ? `
+                     <div class="htmx-metric-item" style="grid-column: 1 / -1;">
+                         <span class="htmx-metric-label">Shadow</span>
+                         <span class="htmx-metric-value" style="font-size:10px; font-weight:400; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:240px; font-family:monospace" title="${shadowInfo}">${shadowInfo}</span>
+                     </div>` : ''}
+                 </div>
+                 
+                 ${extraInfo ? `<div class="htmx-font-metrics" style="border-top:1px solid #f1f5f9; padding-top:8px; gap:16px">${extraInfo}</div>` : ''}
+             </div>`;
+        }
+
+       content += `
+            <!-- Colors Card (Only shown if text mode selected, or explicitly if it has interesting colors) -->
+            ${isTextMode ? `
             <div class="htmx-card colors">
                  <div class="htmx-color-row">
                      <div class="htmx-color-preview-large" style="background:${color}; box-shadow: 0 0 0 1px rgba(0,0,0,0.05)"></div>
                      <div class="htmx-color-details">
                          <div class="htmx-color-value">${color.toUpperCase()}</div>
-                         <span class="htmx-label-source">${getStyleOrigin(el, 'color') || 'style'}</span>
+                         <span class="htmx-label-source">Text Color</span>
                      </div>
                  </div>
                  
@@ -611,7 +703,7 @@ function updateTooltip(el, x, y) {
                          <span class="htmx-label-source">Background</span>
                      </div>
                  </div>` : ''}
-            </div>
+            </div>` : ''}
         </div>
        `;
    }
