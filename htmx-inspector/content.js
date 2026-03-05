@@ -529,15 +529,27 @@ function updateTooltip(el, x, y) {
        const s = globalThis.getComputedStyle(el);
        // RGB to HEX helper
        const rgbToHex = (rgb) => {
-           if (!rgb) return '';
+           if (!rgb) return null;
+           // Handle already hex colors
+           if (rgb.startsWith('#')) return rgb;
+           
            const sep = rgb.includes(",") ? "," : " ";
            const rgbVal = rgb.substring(4).split(")")[0].split(sep);
-           if (rgbVal.length < 3) return rgb; // fallback
-           let r = (+rgbVal[0]).toString(16), g = (+rgbVal[1]).toString(16), b = (+rgbVal[2]).toString(16);
-           if (r.length === 1) r = "0" + r;
-           if (g.length === 1) g = "0" + g;
-           if (b.length === 1) b = "0" + b;
-           return "#" + r + g + b;
+           if (rgbVal.length < 3) return null;
+           
+           const r = parseInt(rgbVal[0], 10);
+           const g = parseInt(rgbVal[1], 10);
+           const b = parseInt(rgbVal[2], 10);
+           
+           // Validate all components are valid numbers
+           if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+           
+           const toHex = (num) => {
+               const hex = num.toString(16);
+               return hex.length === 1 ? "0" + hex : hex;
+           };
+           
+           return "#" + toHex(r) + toHex(g) + toHex(b);
        };
        
        // Heuristic: Is this a text element or a structural container?
@@ -566,9 +578,10 @@ function updateTooltip(el, x, y) {
        content += `
         <div class="htmx-tooltip-header">
             <div class="htmx-header-top">
-                <span class="htmx-tag-name">&lt;${el.tagName.toLowerCase()}&gt;</span>
+                <span class="htmx-tag-name">${el.tagName.toLowerCase()}</span>
                 <span class="htmx-dims">${dims}</span>
             </div>
+              <!-- ${selector ? `<div class="htmx-selector">${selector}</div>` : ''} -->
         </div>
         
         <div class="htmx-tooltip-content">`;
@@ -583,12 +596,10 @@ function updateTooltip(el, x, y) {
                         <span class="htmx-metric-label">Size</span>
                         <span class="htmx-metric-value">${fontSize}<span class='htmx-metric-unit'>px</span></span>
                     </div>
-                    <span style="opacity:0.3; ">|</span>
                     <div class="htmx-metric-item">
                         <span class="htmx-metric-label">Weight</span>
                         <span class="htmx-metric-value" style="font-weight:${fontWeight}">${fontWeight}</span>
                     </div>
-                    <span style="opacity:0.3">|</span>
                     <div class="htmx-metric-item">
                         <span class="htmx-metric-label">Line</span>
                         <span class="htmx-metric-value">${Math.round(Number.parseFloat(s.lineHeight)) || '—'}<span class='htmx-metric-unit'>px</span></span>
@@ -601,23 +612,79 @@ function updateTooltip(el, x, y) {
             const position = s.position;
             const zIndex = s.zIndex === 'auto' ? null : s.zIndex;
             
-            // Background
+            // Background - only show if valid and not transparent
             let bgInfo = null;
-            if (bg && bg !== '#00000000' && bg !== 'transparent') {
-                bgInfo = { color: bg, label: 'Background' };
+            if (bg && bg !== '#00000000' && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)' && !bg.includes('nan')) {
+                // Additional validation: check if it's a valid hex color
+                const isValidHex = /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(bg);
+                if (isValidHex) {
+                    bgInfo = { color: bg, label: 'Background' };
+                }
             }
 
-            // Border
+            // Pro approach: Get the ACTUAL declared border value, not computed fractional pixels
             let borderInfo = null;
-            if (s.borderWidth !== '0px' && s.borderStyle !== 'none') {
-                 const borderColor = rgbToHex(s.borderColor);
-                 borderInfo = `${s.borderWidth} ${s.borderStyle} <span style="display:inline-block; width:8px; height:8px; background:${borderColor}; border:1px solid #ccc; border-radius:50%; margin-left:4px;"></span>`;
+            
+            // Helper to extract declared border from stylesheets
+            const getDeclaredBorderWidth = (element) => {
+                // 1. Check inline style first (highest priority)
+                if (element.style.borderWidth || element.style.border) {
+                    const inline = element.style.borderWidth || element.style.border;
+                    const match = inline.match(/(\d+(?:\.\d+)?px)/);
+                    if (match) return match[1];
+                }
+                
+                // 2. Check CSS rules from stylesheets
+                try {
+                    const sheets = Array.from(document.styleSheets);
+                    for (const sheet of sheets) {
+                        try {
+                            const rules = Array.from(sheet.cssRules || sheet.rules || []);
+                            for (const rule of rules) {
+                                if (rule.style && element.matches(rule.selectorText)) {
+                                    const bw = rule.style.borderWidth || rule.style.border;
+                                    if (bw) {
+                                        const match = bw.match(/(\d+(?:\.\d+)?px)/);
+                                        if (match) return match[1];
+                                    }
+                                }
+                            }
+                        } catch (e) { /* CORS or access errors */ }
+                    }
+                } catch (e) { /* Ignore */ }
+                
+                // 3. Fallback: Use computed but round intelligently
+                const computed = parseFloat(s.borderTopWidth);
+                if (computed > 0) {
+                    // Round to nearest 0.5px (handles both zoom and intentional fractional borders)
+                    return (Math.round(computed * 2) / 2) + 'px';
+                }
+                return null;
+            };
+
+            const declaredWidth = getDeclaredBorderWidth(el);
+            const hasBorder = parseFloat(s.borderTopWidth) > 0 || parseFloat(s.borderRightWidth) > 0 || 
+                              parseFloat(s.borderBottomWidth) > 0 || parseFloat(s.borderLeftWidth) > 0;
+
+            if (hasBorder && declaredWidth) {
+                 // Derive the dominant style and color
+                 const dominantStyle = s.borderTopStyle !== 'none' ? s.borderTopStyle : (s.borderBottomStyle !== 'none' ? s.borderBottomStyle : 'solid');
+                 const domColorRaw = s.borderTopColor !== 'rgba(0, 0, 0, 0)' ? s.borderTopColor : s.borderBottomColor;
+                 const borderColor = rgbToHex(domColorRaw);
+
+                 borderInfo = `
+                 <div style="display:flex; align-items:center; gap:6px;">
+                    <div>${declaredWidth} <span style="font-weight: 500; color: #64748b; font-size: 12px; margin-left: 2px;">${dominantStyle}</span></div>
+                    <div style="width:14px; height:14px; background:${borderColor}; border-radius:50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);"></div>
+                 </div>`;
             }
 
             // Box Shadow
+            // Check inline first (el.style.boxShadow) to bypass computed RGBA conversions if set directly by user, else use computed
+            let rawShadow = el.style.boxShadow || s.boxShadow;
             let shadowInfo = null;
-            if (s.boxShadow !== 'none') {
-                shadowInfo = s.boxShadow;
+            if (rawShadow && rawShadow !== 'none') {
+                shadowInfo = rawShadow;
             }
             
             // Flex/Grid specific info
@@ -626,7 +693,7 @@ function updateTooltip(el, x, y) {
                 extraInfo = `
                  <div class="htmx-metric-item">
                     <span class="htmx-metric-label">Align</span>
-                    <span class="htmx-metric-value">${s.justifyContent.replace('normal','start')} / ${s.alignItems.replace('normal','stretch')}</span>
+                    <span class="htmx-metric-value" style="font-size: 13px;">${s.justifyContent.replace('normal','start')} / ${s.alignItems.replace('normal','stretch')}</span>
                  </div>`;
                  if (s.gap !== 'normal' && s.gap !== '0px') {
                      extraInfo += `<div class="htmx-metric-item"><span class="htmx-metric-label">Gap</span><span class="htmx-metric-value">${s.gap}</span></div>`;
@@ -642,34 +709,34 @@ function updateTooltip(el, x, y) {
 
             content += `
              <div class="htmx-card layout">
-                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; margin-bottom:12px;">
+                 <div class="htmx-layout-grid">
                      <!-- Display -->
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Display</span>
-                         <span class="htmx-metric-value" style="text-transform:uppercase;">${display}</span>
+                         <span class="htmx-metric-value" style="text-transform:lowercase; font-size: 14px;">${display}</span>
                      </div>
                      
                      <!-- Position -->
                      ${position !== 'static' ? `
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Position</span>
-                         <span class="htmx-metric-value">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
+                         <span class="htmx-metric-value" style="font-size: 14px;">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
                      </div>` : ''}
 
                      <!-- Border -->
                      ${borderInfo ? `
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Border</span>
-                         <span class="htmx-metric-value" style="display:flex; align-items:center;">${borderInfo}</span>
+                         <span class="htmx-metric-value" style="display:flex; align-items:center; font-size: 13px;">${borderInfo}</span>
                      </div>` : ''}
 
                      <!-- Background Condensed -->
                      ${bgInfo ? `
                      <div class="htmx-metric-item">
                          <span class="htmx-metric-label">Background</span>
-                         <div style="display:flex; align-items:center; gap:6px">
-                            <div style="width:12px; height:12px; background:${bgInfo.color}; border:1px solid #cbd5e1; border-radius:3px;"></div>
-                            <span class="htmx-metric-value" style="font-size:11px">${bgInfo.color.toUpperCase()}</span>
+                         <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+                            <div style="width:14px; height:14px; background:${bgInfo.color}; border-radius:4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);"></div>
+                            <span class="htmx-metric-value" style="font-size:13px">${bgInfo.color.toUpperCase()}</span>
                          </div>
                      </div>` : ''}
 
@@ -677,11 +744,11 @@ function updateTooltip(el, x, y) {
                      ${shadowInfo ? `
                      <div class="htmx-metric-item" style="grid-column: 1 / -1;">
                          <span class="htmx-metric-label">Shadow</span>
-                         <span class="htmx-metric-value" style="font-size:10px; font-weight:400; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:240px; font-family:monospace" title="${shadowInfo}">${shadowInfo}</span>
+                         <span class="htmx-metric-value" style="font-size:11px; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:240px;" title="${shadowInfo}">${shadowInfo}</span>
                      </div>` : ''}
                  </div>
                  
-                 ${extraInfo ? `<div class="htmx-font-metrics" style="border-top:1px solid #f1f5f9; padding-top:8px; gap:16px">${extraInfo}</div>` : ''}
+                 ${extraInfo ? `<div class="htmx-extra-metrics">${extraInfo}</div>` : ''}
              </div>`;
         }
 
@@ -689,22 +756,24 @@ function updateTooltip(el, x, y) {
             <!-- Colors Card (Only shown if text mode selected, or explicitly if it has interesting colors) -->
             ${isTextMode ? `
             <div class="htmx-card colors">
-                 <div class="htmx-color-row">
-                     <div class="htmx-color-preview-large" style="background:${color}; box-shadow: 0 0 0 1px rgba(0,0,0,0.05)"></div>
-                     <div class="htmx-color-details">
-                         <div class="htmx-color-value">${color.toUpperCase()}</div>
-                         <span class="htmx-label-source">Text Color</span>
+                 <div class="htmx-colors-grid">
+                     <div class="htmx-color-row">
+                         <div class="htmx-color-preview-large" style="background:${color};"></div>
+                         <div class="htmx-color-details">
+                             <div class="htmx-color-value">${color}</div>
+                             <span class="htmx-label-source">Text Color</span>
+                         </div>
                      </div>
+                     
+                     ${(bg && bg !== '#00000000' && bg !== 'transparent') ? `
+                     <div class="htmx-color-row">
+                         <div class="htmx-color-preview-large" style="background:${bg};"></div>
+                         <div class="htmx-color-details">
+                             <div class="htmx-color-value">${bg}</div>
+                             <span class="htmx-label-source">Background Color</span>
+                         </div>
+                     </div>` : ''}
                  </div>
-                 
-                 ${(bg && bg !== '#00000000' && bg !== 'transparent') ? `
-                 <div class="htmx-color-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
-                     <div class="htmx-color-preview-large" style="background:${bg}; box-shadow: 0 0 0 1px rgba(0,0,0,0.05)"></div>
-                     <div class="htmx-color-details">
-                         <div class="htmx-color-value">${bg.toUpperCase()}</div>
-                         <span class="htmx-label-source">Background</span>
-                     </div>
-                 </div>` : ''}
             </div>` : ''}
         </div>
        `;
