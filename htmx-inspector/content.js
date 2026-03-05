@@ -67,7 +67,7 @@ function injectControlPanel() {
         <div class="htmx-panel-header">
             <img src="${chrome.runtime.getURL('assets/target.png')}" class="htmx-panel-logo">
             <div class="htmx-panel-title">
-                <h1>HTMX<span>Inspector</span></h1>
+                <h1>HTML <span>Inspector</span></h1>
             </div>
         </div>
         <div class="htmx-panel-content">
@@ -96,6 +96,16 @@ function injectControlPanel() {
                     <input type="checkbox" id="htmx-opt-styles" checked>
                     <div class="htmx-checkbox"></div>
                 </label>
+
+                   <label class="htmx-feature-row">
+                    <div class="htmx-feature-icon htmx-icon-l">L</div>
+                    <div class="htmx-feature-info">
+                        <span class="htmx-feature-name">Layout</span>
+                        <span class="htmx-feature-desc">Flex/Grid</span>
+                    </div>
+                    <input type="checkbox" id="htmx-opt-layout" checked>
+                    <div class="htmx-checkbox"></div>
+                </label>
                 
                 <label class="htmx-feature-row">
                     <div class="htmx-feature-icon htmx-icon-b">B</div>
@@ -107,15 +117,7 @@ function injectControlPanel() {
                     <div class="htmx-checkbox"></div>
                 </label>
 
-                <label class="htmx-feature-row">
-                    <div class="htmx-feature-icon htmx-icon-l">L</div>
-                    <div class="htmx-feature-info">
-                        <span class="htmx-feature-name">Layout</span>
-                        <span class="htmx-feature-desc">Flex/Grid</span>
-                    </div>
-                    <input type="checkbox" id="htmx-opt-layout" checked>
-                    <div class="htmx-checkbox"></div>
-                </label>
+             
             </div>
         </div>
     `;
