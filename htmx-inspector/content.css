@@ -365,36 +365,34 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
     cursor: crosshair !important;
 }
 
-/* Inspector Status Badge */
+/* Inspector Status Badge - Redesigned */
 .htmx-inspector-status {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #0f172a;
+  background: linear-gradient(135deg, #153d7c 0%, #0a2757 100%);
     color: white;
-    padding: 8px 12px;
-    border-radius: 999px;
+    padding: 10px 16px;
+    border-radius: 25px;
     font-size: 12px;
-    font-family: system-ui, sans-serif;
-    font-weight: 600;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(21, 69, 147, 0.25), 0 0 0 1px rgba(255,255,255,0.1);
     z-index: 2147483647;
-    pointer-events: auto; /* Changed from none to auto */
-    cursor: pointer;      /* Added cursor */
+    pointer-events: auto;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
-    opacity: 0.9;
     letter-spacing: 0.02em;
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .htmx-inspector-status:hover {
-    transform: translateY(-2px);
-    background: #f8fafc;
-    color: #0f172a;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(21, 69, 147, 0.35), 0 0 0 1px rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.3);
 }
 
 /* Style Origin Labels */
@@ -425,9 +423,9 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 
 .htmx-status-dot {
     display: block;
-    width: 6px;
-    height: 6px;
-    background: #22c55e;
+    width: 8px;
+    height: 8px;
+    background: #28f373;
     border-radius: 50%;
     box-shadow: 0 0 8px #22c55e;
     animation: htmx-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
