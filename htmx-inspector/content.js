@@ -343,9 +343,14 @@ function renderInspection(target, mouseX, mouseY) {
 
   clearOverlays();
 
+  const rect = target.getBoundingClientRect();
+  const sx = globalThis.scrollX;
+  const sy = globalThis.scrollY;
+
   // 1. Box Model Overlay
   if (config.boxmodel) {
     drawBoxModel(target);
+    drawVisualPadding(target, rect, sx, sy);
   }
 
   // 2. Layout Visualizer
@@ -470,6 +475,7 @@ function drawLayoutGuides(el) {
     const style = globalThis.getComputedStyle(el);
     const display = style.display;
     
+    // Only draw gaps for layout containers
     if (display === 'flex' || display === 'grid' || display === 'inline-flex' || display === 'inline-grid') {
         const rect = el.getBoundingClientRect();
         const scrollX = globalThis.scrollX;
@@ -879,7 +885,7 @@ function createSvgLayer() {
     svg.style.width = '100%';
     svg.style.height = '100%';
     svg.style.pointerEvents = 'none';
-    svg.style.zIndex = '2147483645';
+    svg.style.zIndex = '2147483647'; // Lifted z-index to sit above box overlays
     svg.style.overflow = 'visible';
     document.body.appendChild(svg);
     return svg;
@@ -1152,32 +1158,83 @@ function drawProLine(x1, y1, x2, y2, value, color = '#ff4785') {
 }
 
 /**
- * Visualizes internal gaps and paddings within a container.
+ * Separated Padding Visualization - Draws lines INSIDE the border.
+ */
+function drawVisualPadding(container, cRect, sx, sy) {
+    if (!svgLayer) return;
+
+    const METRIC_COLOR = '#a855f7'; // Purple/Orchid for padding lines
+
+    const style = globalThis.getComputedStyle(container);
+    
+    // Parse paddings
+    const pt = Number.parseFloat(style.paddingTop) || 0;
+    const pl = Number.parseFloat(style.paddingLeft) || 0;
+    const pr = Number.parseFloat(style.paddingRight) || 0;
+    const pb = Number.parseFloat(style.paddingBottom) || 0;
+    
+    // Parse borders to ensure lines start inside the border
+    const bt = Number.parseFloat(style.borderTopWidth) || 0;
+    const bl = Number.parseFloat(style.borderLeftWidth) || 0;
+    const br = Number.parseFloat(style.borderRightWidth) || 0;
+    const bb = Number.parseFloat(style.borderBottomWidth) || 0;
+
+    // Draw lines only if padding > 0. offsets by border width.
+    if (pt > 0) {
+        // Top Center
+        const x = cRect.left + (cRect.width / 2) + sx;
+        const yStart = cRect.top + bt + sy;
+        const yEnd = yStart + pt;
+        drawProLine(x, yStart, x, yEnd, Math.round(pt), METRIC_COLOR);
+    }
+    if (pl > 0) {
+        // Left Center
+        const y = cRect.top + (cRect.height / 2) + sy;
+        const xStart = cRect.left + bl + sx;
+        const xEnd = xStart + pl;
+        drawProLine(xStart, y, xEnd, y, Math.round(pl), METRIC_COLOR);
+    }
+    if (pr > 0) {
+        // Right Center
+        const y = cRect.top + (cRect.height / 2) + sy;
+        const xStart = cRect.right - br - sx; 
+        // Logic error: cRect.right is absolute viewport X. 
+        // Correct: cRect.right + sx - br (outer edge - border)
+        // Actually: cRect.right includes width.
+        // rect.right = left + width.
+        // so xStart = (cRect.right + sx) - br. 
+        // xEnd = xStart - pr.
+        // drawProLine from right to left or left to right? 
+        // standard is left-to-right but for line drawing order doesn't matter unless arrowheads (none here)
+        
+        const xOuter = cRect.right + sx - br;
+        const xInner = xOuter - pr;
+        drawProLine(xOuter, y, xInner, y, Math.round(pr), METRIC_COLOR);
+    }
+    if (pb > 0) {
+        // Bottom Center
+        const x = cRect.left + (cRect.width / 2) + sx;
+        const yOuter = cRect.bottom + sy - bb;
+        const yInner = yOuter - pb;
+        drawProLine(x, yOuter, x, yInner, Math.round(pb), METRIC_COLOR);
+    }
+}
+
+/**
+ * Visualizes internal gaps within a container (Flex/Grid).
  */
 function drawInternalMetrics(container, cRect, sx, sy) {
     if (!svgLayer) return;
+
+    const GAP_COLOR = '#ec4899'; // Pink for gaps
+
+    // Internal Gaps between children
     const children = Array.from(container.children).filter(el => {
         const style = globalThis.getComputedStyle(el);
         return style.display !== 'none' && style.visibility !== 'hidden';
     });
     if (children.length === 0) return;
 
-    const METRIC_COLOR = '#a855f7'; // Purple/Orchid for internal metrics
-
-    // 1. Padding visualization (Start/End)
-    const style = globalThis.getComputedStyle(container);
-    const pt = Number.parseFloat(style.paddingTop) || 0;
-    const pl = Number.parseFloat(style.paddingLeft) || 0;
-
-    // To prevent clutter, only show if padding > 0
-    if (pt > 0) {
-        drawProLine(cRect.left + cRect.width/2 + sx, cRect.top + sy, cRect.left + cRect.width/2 + sx, cRect.top + pt + sy, Math.round(pt), METRIC_COLOR);
-    }
-    if (pl > 0) {
-        drawProLine(cRect.left + sx, cRect.top + cRect.height/2 + sy, cRect.left + pl + sx, cRect.top + cRect.height/2 + sy, Math.round(pl), METRIC_COLOR);
-    }
-
-    // 2. Internal Gaps between children
     for (let i = 0; i < children.length - 1; i++) {
         const rectA = children[i].getBoundingClientRect();
         const rectB = children[i+1].getBoundingClientRect();
@@ -1188,10 +1245,10 @@ function drawInternalMetrics(container, cRect, sx, sy) {
 
         if (vGap > 1 && vGap < 500) {
             const x = Math.max(rectA.left, rectB.left) + Math.min(rectA.width, rectB.width)/2;
-            drawProLine(x + sx, rectA.bottom + sy, x + sx, rectB.top + sy, Math.round(vGap), METRIC_COLOR);
+            drawProLine(x + sx, rectA.bottom + sy, x + sx, rectB.top + sy, Math.round(vGap), GAP_COLOR);
         } else if (hGap > 1 && hGap < 500) {
             const y = Math.max(rectA.top, rectB.top) + Math.min(rectA.height, rectB.height)/2;
-            drawProLine(rectA.right + sx, y + sy, rectB.left + sx, y + sy, Math.round(hGap), METRIC_COLOR);
+            drawProLine(rectA.right + sx, y + sy, rectB.left + sx, y + sy, Math.round(hGap), GAP_COLOR);
         }
     }
 }
