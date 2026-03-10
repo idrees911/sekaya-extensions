@@ -629,71 +629,7 @@ function updateTooltip(el, x, y) {
                 }
             }
 
-            // Pro approach: Get the ACTUAL declared border value, not computed fractional pixels
-            let borderInfo = null;
-            
-            // Helper to extract declared border from stylesheets
-            const getDeclaredBorderWidth = (element) => {
-                // 1. Check inline style first (highest priority)
-                if (element.style.borderWidth || element.style.border) {
-                    const inline = element.style.borderWidth || element.style.border;
-                    const match = inline.match(/(\d+(?:\.\d+)?px)/);
-                    if (match) return match[1];
-                }
-                
-                // 2. Check CSS rules from stylesheets
-                try {
-                    const sheets = Array.from(document.styleSheets);
-                    for (const sheet of sheets) {
-                        try {
-                            const rules = Array.from(sheet.cssRules || sheet.rules || []);
-                            for (const rule of rules) {
-                                if (rule.style && element.matches(rule.selectorText)) {
-                                    const bw = rule.style.borderWidth || rule.style.border;
-                                    if (bw) {
-                                        const match = bw.match(/(\d+(?:\.\d+)?px)/);
-                                        if (match) return match[1];
-                                    }
-                                }
-                            }
-                        } catch (e) { /* CORS or access errors */ }
-                    }
-                } catch (e) { /* Ignore */ }
-                
-                // 3. Fallback: Use computed but round intelligently
-                const computed = parseFloat(s.borderTopWidth);
-                if (computed > 0) {
-                    // Round to nearest 0.5px (handles both zoom and intentional fractional borders)
-                    return (Math.round(computed * 2) / 2) + 'px';
-                }
-                return null;
-            };
 
-            const declaredWidth = getDeclaredBorderWidth(el);
-            const hasBorder = parseFloat(s.borderTopWidth) > 0 || parseFloat(s.borderRightWidth) > 0 || 
-                              parseFloat(s.borderBottomWidth) > 0 || parseFloat(s.borderLeftWidth) > 0;
-
-            if (hasBorder && declaredWidth) {
-                 // Derive the dominant style and color
-                 const dominantStyle = s.borderTopStyle !== 'none' ? s.borderTopStyle : (s.borderBottomStyle !== 'none' ? s.borderBottomStyle : 'solid');
-                 const domColorRaw = s.borderTopColor !== 'rgba(0, 0, 0, 0)' ? s.borderTopColor : s.borderBottomColor;
-                 const borderColor = rgbToHex(domColorRaw);
-
-                 borderInfo = `
-                 <div style="display:flex; align-items:center; gap:6px;">
-                    <div>${declaredWidth} <span style="font-weight: 500; color: #64748b; font-size: 12px; margin-left: 2px;">${dominantStyle}</span></div>
-                    <div style="width:14px; height:14px; background:${borderColor}; border-radius:50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);"></div>
-                 </div>`;
-            }
-
-            // Box Shadow
-            // Check inline first (el.style.boxShadow) to bypass computed RGBA conversions if set directly by user, else use computed
-            let rawShadow = el.style.boxShadow || s.boxShadow;
-            let shadowInfo = null;
-            if (rawShadow && rawShadow !== 'none') {
-                shadowInfo = rawShadow;
-            }
-            
             // Flex/Grid specific info
             let extraInfo = '';
             if (display.includes('flex')) {
@@ -731,13 +667,6 @@ function updateTooltip(el, x, y) {
                          <span class="htmx-metric-value" style="font-size: 13px;">${position} ${zIndex ? `(z-${zIndex})` : ''}</span>
                      </div>` : ''}
 
-                     <!-- Border -->
-                     ${borderInfo ? `
-                     <div class="htmx-metric-item">
-                         <span class="htmx-metric-label">Border</span>
-                         <span class="htmx-metric-value" style="display:flex; align-items:center; font-size: 13px;">${borderInfo}</span>
-                     </div>` : ''}
-
                      <!-- Background Condensed -->
                      ${bgInfo ? `
                      <div class="htmx-metric-item">
@@ -746,13 +675,6 @@ function updateTooltip(el, x, y) {
                             <div style="width:14px; height:14px; background:${bgInfo.color}; border-radius:4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);"></div>
                             <span class="htmx-metric-value" style="font-size:13px">${bgInfo.color.toUpperCase()}</span>
                          </div>
-                     </div>` : ''}
-
-                     <!-- Shadow (Full Row) -->
-                     ${shadowInfo ? `
-                     <div class="htmx-metric-item" style="grid-column: 1 / -1;">
-                         <span class="htmx-metric-label">Shadow</span>
-                         <span class="htmx-metric-value" style="font-size:11px; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:240px;" title="${shadowInfo}">${shadowInfo}</span>
                      </div>` : ''}
                  </div>
                  
