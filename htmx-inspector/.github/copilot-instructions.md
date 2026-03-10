@@ -1,24 +1,31 @@
 # Web Inspector Pro - AI Instructions
 
 ## Project Overview
-A Chrome Extension (Manifest V3) for visual web inspection. Users hover over elements to inspect styles, box model, and layout details in real-time.
+A Chrome Extension (Manifest V3) for visual web inspection. Users hover over elements to inspect styles, box model, and layout details in real-time. Features a **Floating Control Panel** injected directly into the page for seamless toggling and configuration.
 
 ## Architecture
 
 ### Core Components
 - **Manifest (`manifest.json`)**: Configures permissions (`activeTab`, `storage`) and injects assets.
 - **Content Script (`content.js`)**:
-  - Injected into all pages (`<all_urls>`).
-  - Handles the core inspection loop: `mouseover` detection, overlay rendering, and tooltip generation.
-  - Manages global state via `enable()` and `disable()` functions.
+  - **Primary Controller**: Handles both inspection logic and the injected UI.
+  - **Injected UI**:
+    - **Floating Button**: A persistent toggle button on the page.
+    - **Control Panel**: An in-page dashboard to toggle inspection modes and configure settings.
+    - **Toast Notifications**: Provides non-intrusive user feedback (e.g., "Copied to clipboard").
+  - **Inspection Loop**: Handles `mouseover`, `click` (locking), and `scroll` events.
+  - **Rendering**: Manages the Tooltip, Box Model overlays, and a high-performance SVG layer for measurements.
 - **Popup (`popup.html`, `popup.js`)**:
-  - Example of "No Build" UI.
-  - Manages user preferences (`styles`, `boxmodel`, `layout`).
-  - **Forced Activation**: Automatically enables the inspector when opened.
+  - Legacy entry point.
+  - Can still be used to configure global preferences, but the in-page panel is the primary interface.
+  - Broadcasts `UPDATE_CONFIG` to sync settings across tabs.
 
 ### State Management
-- **Source of Truth**: `chrome.storage.local` stores `isEnabled` and configuration objects.
-- **Messaging**: `popup.js` broadcasts `UPDATE_CONFIG` messages to active tabs to trigger immediate updates without page reloads.
+- **Local State**: `content.js` maintains `isEnabled` locally for the specific tab to prevent global state conflicts.
+- **Configuration**: User preferences (`styles`, `boxmodel`, `layout`) are stored in `chrome.storage.local` and synced.
+- **Lifecycle**:
+  - **Enable**: Injects/Shows UI -> Attaches Listeners -> Shows Status.
+  - **Disable**: Detaches Listeners -> Shows Toast -> Starts Auto-hide Timer for UI.
 
 ## Development Workflow
 
@@ -28,26 +35,36 @@ A Chrome Extension (Manifest V3) for visual web inspection. Users hover over ele
 3. Click **Load unpacked** and select the project root directory.
 
 ### Debugging
-- **Popup Logic**: Right-click the extension icon -> "Inspect Popup".
-- **Content Script**: Open DevTools on the target web page. Logs from `content.js` appear in the page's console.
-- **Reloading**: After editing any file, click the reload icon on the extension card in `chrome://extensions/`.
+- **Content Script & UI**: Open DevTools on the target web page. All logic now resides here.
+- **UI Tweaks**: The Control Panel and Toasts are standard DOM elements injected into the page. Inspect them directly in the Elements panel.
+- **Reloading**: After editing `content.js` or `content.css`, reload the extension AND refresh the target web page.
 
 ## Conventions & Patterns
 
 ### Code Style
-- **Vanilla JS**: Use standard DOM APIs. No bundlers or frameworks.
+- **Vanilla JS**: Use standard DOM APIs. No bundlers.
 - **CSS Isolation**:
-  - Prefix all classes with `htmx-` (e.g., `.htmx-inspector-tooltip`, `.htmx-inspector-highlight`) to prevent style collisions.
-  - Use specific selectors in `content.css`.
+  - **Prefix everything**: `.htmx-*` (e.g., `.htmx-control-panel`, `.htmx-toast`, `.htmx-floating-btn`).
+  - **z-index**: Use `2147483647` (Max Int) to ensure visibility over all page content.
+  - **Reset**: Explicitly reset properties (box-sizing, font-family) on injected elements to avoid inheriting page styles.
 
-### Implementation Details
-- **Event Handling**:
-  - Uses capturing listeners (`{ capture: true }`) for `click` and `scroll` to override page behavior during inspection.
-  - Explicit cleanup in `disable()`: must remove all event listeners and injected DOM elements (tooltips, badges, SVGs).
-- **DOM Interaction**:
-  - Toggles global class `.htmx-inspector-active` on `<html>` to scope CSS rules.
-  - Creates and manages a persistent status badge (`.htmx-inspector-status`) when active.
+### Component Architecture
+
+#### 1. Floating Control Panel (`#htmx-control-panel`)
+- **Purpose**: Main switchboard for the extension.
+- **Behavior**: Draggable (optional), toggles visibility via Floating Button.
+- **Features**: Master toggle, feature checkboxes (Styles, Layout, Box Model).
+
+#### 2. Toast System (`.htmx-toast`)
+- **Purpose**: Ephemeral feedback.
+- **Styles**: Fixed position, dark mode aesthetic, auto-dismissing.
+
+#### 3. Inspection Overlays
+- **Tooltip**: Follows mouse (or locks on click). Displays computed styles.
+- **SVG Layer**: Renders lines and guides for layout measurements.
+- **Highlight**: Dashed outline on hovered elements.
 
 ### Key Logic
-- **Locking**: The inspector supports "locking" on an element via click, preventing the tooltip from moving until unlocked or dismissed.
-- **Overlays**: separate layers for Box Model (CSS) and precise measurements (SVG layer).
+- **Locking**: Click an element to "lock" the inspector. Allows interacting with the tooltip (e.g., copying values). Click again to unlock.
+- **Event Capture**: Uses `{ capture: true }` for `click` events to intercept interactions while inspecting.
+- **Clean Up**: `disable()` MUST remove all injected DOM nodes and event listeners to leave the page exactly as found.
