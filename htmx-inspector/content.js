@@ -350,6 +350,10 @@ function renderInspection(target, mouseX, mouseY) {
   // 1. Box Model Overlay
   if (config.boxmodel) {
     drawBoxModel(target);
+  }
+
+  // Draw Visual Padding if Box Model OR Layout is enabled
+  if (config.boxmodel || config.layout) {
     drawVisualPadding(target, rect, sx, sy);
   }
 
