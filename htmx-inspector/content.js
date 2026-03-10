@@ -692,7 +692,13 @@ function updateTooltip(el, x, y) {
                          <div class="htmx-color-preview-large" style="background:${color};"></div>
                          <div class="htmx-color-details">
                              <div class="htmx-color-value">${color}</div>
-                             <span class="htmx-label-source">Text Color</span>
+                             <div style="display:flex; align-items:center; gap:6px">
+                                <!-- <span class="htmx-label-source">Text Color</span> -->
+                                ${(() => {
+                                    const origin = getStyleOrigin(el, 'color');
+                                    return origin ? `<span class="htmx-dims" style="margin-top:4px;" title="${origin}">${origin}</span>` : '';
+                                })()}
+                             </div>
                          </div>
                      </div>
                      
@@ -783,14 +789,20 @@ function getStyleOrigin(el, prop) {
             // Note: Simplistic approach. Ideally we should calculate specificity, 
             // but for a tooltip, the "last matched" in the DOM order is often the winner.
             const winner = matchedRules.at(-1);
+
+            // User Request: "show class only if that class is made specific for color"
+            // We interpret this as: The rule doesn't define many other properties.
+            // length 1 = just color. length 2 = color + background? or color + !important marker (not a prop)?
+            // We'll trust that small rules are "specific".
+            if (prop === 'color' && winner.style.length > 2) {
+                return null;
+            }
+
             return winner.selectorText;
         }
 
-        // 3. If not found, check parent (Inheritance)
-        if (prop === 'color' && el.parentElement) {
-            const parentOrigin = getStyleOrigin(el.parentElement, prop);
-            return parentOrigin ? `Inherited (${parentOrigin})` : null;
-        }
+        // 3. Inheritance check removed per user request - only show if directly applied
+        return null;
     } catch (err) {
         console.warn('HTMX Inspector Trace Error:', err);
     }
