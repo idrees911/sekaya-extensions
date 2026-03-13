@@ -493,7 +493,7 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
   width: 300px;
   background: #f8fafc;
   border-radius: 20px;
-  z-index: 2147483646;
+  z-index: 2147483647 !important;
   box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
   overflow: hidden;
   opacity: 0;
