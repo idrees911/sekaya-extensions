@@ -736,3 +736,51 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
     color: white;
 }
 
+
+
+/* Locked Overlay */
+.htmx-locked-overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid #10c42e !important;
+  background: rgba(29, 78, 216, 0.05);
+  z-index: 20000;
+  box-sizing: border-box;
+}
+
+.htmx-locked-label {
+  position: absolute;
+  bottom: -1px;
+  left: -2px;
+  transform: translateY(100%);
+  background: #089b1c;
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+
+.htmx-locked-icon {
+  width: 14px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.htmx-inspector-locked {
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  border-color: transparent !important;
+}

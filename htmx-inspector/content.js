@@ -1,4 +1,5 @@
 const INSPECT_CLASS = 'htmx-inspector-highlight';
+const LOCKED_CLASS = 'htmx-inspector-locked';
 const TOOLTIP_CLASS = 'htmx-inspector-tooltip';
 
 let isEnabled = false;
@@ -214,8 +215,16 @@ function disable() {
   document.removeEventListener('mouseover', onHover);
   document.removeEventListener('mouseout', onOut);
   document.removeEventListener('click', onClick, { capture: true });
-  document.removeEventListener('scroll', onScroll);
-  
+  document.removeEventListener('scroll', onScroll, { capture: true, passive: true });
+
+  if (lockedElement) {
+      lockedElement.classList.remove(LOCKED_CLASS);
+      lockedElement.classList.remove(INSPECT_CLASS); // Also remove highlight
+      lockedElement = null;
+  }
+  clearOverlays();
+  hideTooltip();
+
   showToast('Inspector Deactivated (UI will hide in 3s)', 'info');
 
   // Start timer to hide UI
@@ -304,6 +313,7 @@ function createTooltip() {
 function clearOverlays() {
   document.querySelectorAll('.htmx-box-overlay').forEach(el => el.remove());
   document.querySelectorAll('.htmx-layout-overlay').forEach(el => el.remove());
+  document.querySelectorAll('.htmx-locked-overlay').forEach(el => el.remove()); // Remove locked overlays
   if (svgLayer) svgLayer.innerHTML = ''; // Clear SVG distances
   if (currentOverlay) currentOverlay = null;
 }
@@ -347,7 +357,16 @@ function renderInspection(target, mouseX, mouseY) {
   const sx = globalThis.scrollX;
   const sy = globalThis.scrollY;
 
-  // 1. Box Model Overlay
+  // 1. Draw Locked Overlay if active
+  if (lockedElement === target) {
+    drawLockedOverlay(target, rect, sx, sy);
+    // If locked, we skip other visual clutter (Box Model, Layout, Distances)
+    // as per user request "only this border should be applied when locked"
+    updateTooltip(target);
+    return;
+  }
+
+  // 2. Box Model Overlay
   if (config.boxmodel) {
     drawBoxModel(target);
   }
@@ -385,13 +404,26 @@ function onClick(e) {
     e.stopPropagation();
 
     if (lockedElement) {
-        // Unlock if identifying a click outside or on the same element
-        lockedElement = null;
-        clearOverlays();
-        hideTooltip();
+        // Retrieve the previously locked element and remove the class
+        lockedElement.classList.remove(LOCKED_CLASS);
+
+        // If clicking the SAME element, just unlock.
+        if (lockedElement === e.target) {
+            lockedElement = null;
+            clearOverlays();
+            hideTooltip();
+        } else {
+            // Include switching lock to new element immediately?
+            // The original logic seemed to just unlock everything on click if locked.
+            // Let's improve it: If clicking another element, switch lock to it.
+            lockedElement = e.target;
+            lockedElement.classList.add(LOCKED_CLASS);
+            renderInspection(lockedElement);
+        }
     } else {
         // Lock onto the current target
         lockedElement = e.target;
+        lockedElement.classList.add(LOCKED_CLASS);
         renderInspection(lockedElement);
     }
 }
@@ -1217,3 +1249,18 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+function drawLockedOverlay(target, rect, sx, sy) {
+  const overlay = document.createElement('div');
+  overlay.className = 'htmx-locked-overlay';
+  overlay.style.top = (rect.top + sy) + 'px';
+  overlay.style.left = (rect.left + sx) + 'px';
+  overlay.style.width = rect.width + 'px';
+  overlay.style.height = rect.height + 'px';
+
+  const label = document.createElement('div');
+  label.className = 'htmx-locked-label';
+  label.innerHTML = '<span class="htmx-locked-icon">&#10003;</span> Locked';
+
+  overlay.appendChild(label);
+  document.body.appendChild(overlay);
+}
