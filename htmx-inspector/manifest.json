@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Web Inspector Pro",
+  "name": "Visual CSS Inspector",
   "version": "1.0",
-  "description": "Professional web inspection tool for Styles, Box Model, and Layout.",
+  "description": "A visual CSS inspector to view styles, box model, and layout details instantly on hover.",
   "permissions": ["activeTab", "storage"],
   "action": {
-    "default_title": "Inspect Web",
+    "default_title": "Inspect Web Page",
     "default_icon": "assets/div.png"
   },
   "background": {
