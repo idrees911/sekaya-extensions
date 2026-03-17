@@ -1,6 +1,6 @@
 /* HTMX Inspector Styles */
 .htmx-inspector-highlight {
-  outline: 2px dashed #38bdf8 !important;
+  outline: 2px dashed #1D4ED8 !important;
   outline-offset: -2px !important;
   cursor: help !important;
   background-color: rgba(56, 189, 248, 0.05) !important;
@@ -56,7 +56,7 @@
 
 /* Tag Badge - Light Style */
 .htmx-tag-name {
-  background: #1c56b4;
+  background: #1D4ED8;
   color: #fff;
   font-weight: 800;
   font-size: 13px;
@@ -68,7 +68,7 @@
 
 .htmx-dims {
   font-size: 12px;
-  color: #64748b;
+  color: #64748B;
   font-weight: 600;
   background: #ffffff;
    padding: 4px 10px;
@@ -84,8 +84,8 @@
   z-index: 1;
   font-weight: 500;
 }
-.htmx-id-token { color: #1c56b4; font-weight: 700; }
-.htmx-class-token { color: #3b82f6; }
+.htmx-id-token { color: #1D4ED8; font-weight: 700; }
+.htmx-class-token { color: #6366F1; }
 
 /* Content Body - Matching Panel Padding */
 .htmx-tooltip-content {
@@ -140,8 +140,8 @@
   transition: all 0.2s;
 }
 .htmx-metric-item:hover {
-  border-color: #40b9e4;
-  box-shadow: 0 1px 3px rgba(64, 185, 228, 0.1);
+  border-color: #6366F1;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.1);
 }
 
 /* Typography metrics - larger and more prominent */
@@ -442,14 +442,14 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 
 /* Scoped Variables for Panel */
 .htmx-inspector-root {
-  --p-blue: #154593;
-  --p-sky: #40b9e4;
+  --p-blue: #1D4ED8;
+  --p-sky: #6366F1;
   --p-white: #ffffff;
   --p-bg: #f8fafc;
   --p-border: #e2e8f0;
-  --p-text: #0f172a;
-  --p-muted: #64748b;
-  --grad-primary: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  --p-text: #0F172A;
+  --p-muted: #64748B;
+  --grad-primary: linear-gradient(135deg, #1D4ED8 0%, #1e40af 100%);
   --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1);
   font-family: 'Outfit', sans-serif;
 }
@@ -461,9 +461,9 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
   right: 20px;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #1e40af 100%);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(21, 69, 147, 0.3);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
   z-index: 2147483647; /* Max Z-Index */
   cursor: pointer !important;
   display: flex !important;
@@ -514,7 +514,7 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 /* --- Ported Panel Styles (Scoped) --- */
 
 .htmx-panel-header {
-  background: linear-gradient(135deg, #1c56b4 0%, #154593 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #1e40af 100%);
   padding: 16px;
   display: flex;
   align-items: center;
@@ -606,7 +606,7 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.htmx-switch input:checked + .htmx-slider { background: #154593; }
+.htmx-switch input:checked + .htmx-slider { background: #1D4ED8; }
 .htmx-switch input:checked + .htmx-slider:before { transform: translateX(20px); }
 
 /* Feature List */
@@ -630,7 +630,7 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 }
 
 .htmx-feature-row:hover {
-  border-color: #40b9e4;
+  border-color: #6366F1;
 }
 
 .htmx-feature-icon {
@@ -669,8 +669,8 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 
 .htmx-feature-row input { display: none; }
 .htmx-feature-row input:checked ~ .htmx-checkbox {
-  background: #154593;
-  border-color: #154593;
+  background: #1D4ED8;
+  border-color: #1D4ED8;
 }
 .htmx-feature-row input:checked ~ .htmx-checkbox::after {
   content: '✓';
