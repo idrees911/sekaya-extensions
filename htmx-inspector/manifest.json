@@ -6,7 +6,7 @@
   "permissions": ["activeTab", "storage"],
   "action": {
     "default_title": "Inspect Web Page",
-    "default_icon": "assets/div.png"
+    "default_icon": "assets/tag.png"
   },
   "background": {
     "service_worker": "background.js"
