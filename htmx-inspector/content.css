@@ -485,7 +485,7 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 4px;
-  border-radius: 25px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
