@@ -539,8 +539,8 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding: 8px;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -548,8 +548,8 @@ background-color: rgba(216, 180, 254, 0.5); /* Purple-300 - Medium light */
 }
 
 .htmx-panel-logo {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: block;
    filter: brightness(0) invert(1);
 }
