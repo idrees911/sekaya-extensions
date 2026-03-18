@@ -52,7 +52,11 @@ function injectControlPanel() {
     // 1. Floating Button
     const btn = document.createElement('div');
     btn.className = 'htmx-floating-btn';
-    btn.innerHTML = `<img src="${chrome.runtime.getURL('assets/target.png')}" alt="Inspect">`;
+    btn.innerHTML = `
+        <div class="htmx-floating-btn-wrapper">
+            <img src="${chrome.runtime.getURL('assets/tag.png')}" alt="Inspect">
+        </div>
+    `;
     btn.title = "Toggle Inspector Panel";
     btn.onclick = () => {
         const panel = document.getElementById('htmx-control-panel');
@@ -66,7 +70,9 @@ function injectControlPanel() {
     panel.className = 'htmx-panel-container htmx-inspector-root';
     panel.innerHTML = `
         <div class="htmx-panel-header">
-            <img src="${chrome.runtime.getURL('assets/target.png')}" class="htmx-panel-logo">
+            <div class="htmx-panel-logo-wrapper">
+                <img src="${chrome.runtime.getURL('assets/tag.png')}" class="htmx-panel-logo">
+            </div>
             <div class="htmx-panel-title">
                 <h1>HTML <span>Inspector</span></h1>
             </div>
